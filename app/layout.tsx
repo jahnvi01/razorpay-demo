@@ -1,24 +1,33 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Devanagari, TASA_Orbiter } from "next/font/google";
+import localFont from "next/font/local";
 import { I18nProvider } from "@/components/i18n-provider";
 import { SerwistProvider } from "@/components/serwist-provider";
 import { getLang } from "@/lib/i18n/server";
 import "./globals.css";
 
-const inter = Inter({
+// Fonts are bundled with the app (app/fonts, OFL licensed via Fontsource), so builds never depend
+// on downloading from Google Fonts. Variable weight files cover 100 to 900.
+const inter = localFont({
   variable: "--font-inter",
-  subsets: ["latin"],
+  src: [
+    { path: "./fonts/inter-latin-wght-normal.woff2", weight: "100 900", style: "normal" },
+    { path: "./fonts/inter-latin-ext-wght-normal.woff2", weight: "100 900", style: "normal" },
+  ],
+  display: "swap",
 });
 
-const tasa = TASA_Orbiter({
+const tasa = localFont({
   variable: "--font-tasa",
-  subsets: ["latin"],
+  src: "./fonts/tasa-orbiter-latin-wght-normal.woff2",
+  weight: "400 800",
+  display: "swap",
 });
 
-const notoDevanagari = Noto_Sans_Devanagari({
+const notoDevanagari = localFont({
   variable: "--font-devanagari",
-  subsets: ["devanagari"],
-  weight: ["400", "500", "600", "700"],
+  src: "./fonts/noto-sans-devanagari-devanagari-wght-normal.woff2",
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {

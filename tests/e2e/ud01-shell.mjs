@@ -10,7 +10,11 @@ await page.setViewport({ width: 360, height: 740, deviceScaleFactor: 2, isMobile
 const results = [];
 const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? "  (" + extra + ")" : ""}`);
 
-for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], ["/app/customers/c1", "Customers"], ["/app/overdue", "Overdue"]]) {
+// A real customer from this browser's own sandbox
+await page.goto(base + "/app/customers", { waitUntil: "networkidle0" });
+const customerPath = await page.$eval("main ul li a", (a) => a.getAttribute("href"));
+
+for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], [customerPath, "Customers"], ["/app/overdue", "Overdue"]]) {
   await page.goto(base + path, { waitUntil: "networkidle0" });
   const m = await page.evaluate(() => ({
     sw: document.documentElement.scrollWidth,
@@ -36,7 +40,7 @@ check("tap Overdue tab navigates", true);
 // menu with Reset demo
 await page.click('button[aria-label="Menu"]');
 const item = await page.$eval('[role="menuitem"]', (b) => ({ text: b.textContent, disabled: b.disabled }));
-check("menu shows Reset demo (disabled until UD-34)", item.text.includes("Reset demo") && item.disabled);
+check("menu shows Reset demo, ready to use", item.text.includes("Reset demo") && !item.disabled);
 
 await page.mouse.click(40, 400);
 const closed = await page.$('[role="menu"]');

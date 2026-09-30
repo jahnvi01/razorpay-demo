@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { resetDemo } from "@/app/app/actions";
 import { useI18n } from "./i18n-provider";
 import { MoreVerticalIcon, RefreshIcon } from "./icons";
 import { LanguageToggle } from "./language-toggle";
@@ -15,6 +16,7 @@ const topbarButton =
 export function AppHeader() {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resetting, startReset] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,17 +65,22 @@ export function AppHeader() {
                 <p className="text-sm font-semibold text-ink">{MERCHANT_NAME}</p>
                 <p className="text-xs text-ink-muted">{t("header.merchantRole")}</p>
               </div>
-              {/* Wired up in UD-34 */}
               <button
                 type="button"
                 role="menuitem"
-                disabled
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-ink disabled:cursor-not-allowed disabled:text-ink-disabled"
+                disabled={resetting}
+                onClick={() =>
+                  startReset(async () => {
+                    await resetDemo();
+                    setMenuOpen(false);
+                  })
+                }
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-ink transition-colors duration-200 ease-standard hover:bg-gray-faded disabled:cursor-wait disabled:text-ink-muted"
               >
-                <RefreshIcon size={18} />
+                <RefreshIcon size={18} className={resetting ? "animate-spin" : ""} />
                 <span className="flex flex-col">
-                  <span className="font-medium">{t("header.resetDemo")}</span>
-                  <span className="text-xs">{t("header.comingSoon")}</span>
+                  <span className="font-medium">{resetting ? t("header.resetting") : t("header.resetDemo")}</span>
+                  <span className="text-xs text-ink-muted">{t("header.resetHint")}</span>
                 </span>
               </button>
             </div>

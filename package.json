@@ -7,11 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "node tests/e2e/ud01-shell.mjs && node tests/e2e/ud02-language.mjs"
+    "test:e2e": "node tests/e2e/ud01-shell.mjs && node tests/e2e/ud02-language.mjs",
+    "test": "vitest run",
+    "db:seed": "node --env-file-if-exists=.env.local scripts/seed.mts",
+    "db:local": "node tests/local-supabase/start.mjs",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "razorpay:check": "node --env-file-if-exists=.env.local scripts/razorpay-check.mts",
+    "tunnel": "ngrok http 3000",
+    "webhook:send": "node --env-file-if-exists=.env.local scripts/webhook-send.mts"
   },
   "dependencies": {
     "@serwist/turbopack": "^9.5.12",
+    "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.7",
+    "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
@@ -19,14 +28,17 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.7",
+    "postgres": "^3.4.9",
     "puppeteer-core": "^25.12.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "vitest": "^5.0.2"
+  },
+  "type": "module"
 }

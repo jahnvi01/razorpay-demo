@@ -10,7 +10,6 @@ const results = [];
 const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? "  (" + extra + ")" : ""}`);
 
 const ENGLISH_ONLY = ["Overview", "This month", "Udhaar given", "Collected", "Remaining", "Home", "Customers", "Overdue", "Live totals"];
-const routes = ["/app", "/app/customers", "/app/customers/c1", "/app/overdue"];
 
 const newPage = async () => {
   const page = await browser.newPage();
@@ -39,6 +38,10 @@ const state = (page) =>
   });
 
 let page = await newPage();
+// A real customer from this browser's own sandbox
+await page.goto(base + "/app/customers", { waitUntil: "networkidle0" });
+const customerPath = await page.$eval("main ul li a", (a) => a.getAttribute("href"));
+const routes = ["/app", "/app/customers", customerPath, "/app/overdue"];
 await page.goto(base + "/app", { waitUntil: "networkidle0" });
 let s = await state(page);
 check("first visit opens in English", s.lang === "en" && s.nav === "Home,Customers,Overdue" && s.checked === "en", s.nav);

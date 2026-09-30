@@ -8,7 +8,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 - Customers are added by manual entry in the MVP. Contact import moved to V2
 - Day-before reminders run on a Vercel daily cron (decision below)
 - No limit on reminders. The merchant decides how often to remind
-- No sign-up or login. One hardcoded demo merchant, Ramesh Kirana, with a private sandbox per visitor session
+- No sign-up or login. One hardcoded demo merchant, Ramesh Kirana, with one shared demo for all visitors (Reset demo resets it for everyone)
 - Stack: Next.js App Router, TypeScript, Tailwind, Serwist PWA, route handlers under app/api, Supabase Postgres (Mumbai) with server-only service role access, Supabase Realtime broadcast with polling fallback, official razorpay Node SDK, one Vercel project with Vercel Cron
 
 **Reminder decision: Vercel daily cron.** Razorpay's built-in link reminders follow the link's own expiry settings, not our per-entry due dates. One link covers a customer's whole balance, so it can span entries with different due dates. A daily cron at 10:00 IST finds entries due tomorrow and triggers the Razorpay payment link SMS for each customer. Timing is "the day before the due date" rather than exactly 24 hours.
@@ -19,18 +19,18 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | --- | --- | --- | --- | --- | --- |
 | UD-01 | App shell and navigation | 0 | Must | M | Done |
 | UD-02 | English and Hindi toggle | 0 | Must | M | Test |
-| UD-03 | Data model and database | 0 | Must | M | Ready |
-| UD-04 | Razorpay test mode and webhook endpoint | 0 | Must | M | Ready |
-| UD-05 | Demo seed data | 0 | Must | S | Ready |
-| UD-34 | Demo merchant and session sandbox | 0 | Must | M | Ready |
+| UD-03 | Data model and database | 0 | Must | M | Done |
+| UD-04 | Razorpay test mode and webhook endpoint | 0 | Must | M | Done |
+| UD-05 | Demo seed data | 0 | Must | S | Done |
+| UD-34 | Demo merchant and shared demo data | 0 | Must | M | Done |
 | UD-35 | Razorpay look and feel | 0 | Must | M | Test |
-| UD-06 | Phase 0 gate | 0 | Must | S | Ready |
-| UD-07 | Add customer manually | 1 | Must | S | Ready |
-| UD-08 | Record udhaar | 1 | Must | M | Ready |
-| UD-09 | Oldest-first clearing engine | 1 | Must | M | Ready |
-| UD-10 | Cash received | 1 | Must | S | Ready |
-| UD-11 | Home summary | 1 | Must | S | Ready |
-| UD-12 | Phase 1 gate | 1 | Must | S | Ready |
+| UD-06 | Phase 0 gate | 0 | Must | S | Test |
+| UD-07 | Add customer manually | 1 | Must | S | Done |
+| UD-08 | Record udhaar | 1 | Must | M | Test |
+| UD-09 | Oldest-first clearing engine | 1 | Must | M | Done |
+| UD-10 | Cash received | 1 | Must | S | Done |
+| UD-11 | Home summary | 1 | Must | S | Done |
+| UD-12 | Phase 1 gate | 1 | Must | S | Test |
 | UD-13 | Customer pay link | 2 | Must | M | Backlog |
 | UD-14 | WhatsApp share button | 2 | Must | S | Backlog |
 | UD-15 | SMS through Razorpay payment link | 2 | Must | S | Backlog |
@@ -228,11 +228,12 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 - Part payment clears oldest first and the rest stays due
 - The same webhook sent twice records the payment once
 - Failed or cancelled payments clear nothing
+- Payment status is also synced when a customer screen opens, so a missed webhook is caught and local testing needs no tunnel
 
 **Tech requirements**
 - Handle `payment_link.paid` and `payment_link.partially_paid` webhooks
 - Idempotency on Razorpay payment ID
-- Supabase Realtime broadcast of the payment event to the sandbox, polling as fallback
+- Supabase Realtime broadcast of the payment event to open screens, polling as fallback
 
 ### UD-19 · Shared QR match
 - Phase: 3
@@ -402,200 +403,11 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 
 **Tech requirements**
 - Static route `/`, app at `/app`
-- App Demo opens a fresh Ramesh Kirana sandbox from UD-34
+- App Demo opens the shared Ramesh Kirana demo from UD-34
 
 ## Ready
 
-### UD-03 · Data model and database
-- Phase: 0
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: none
-- User story: As the team, we want one clean data model so every feature reads the same numbers.
-
-**Acceptance criteria**
-- Tables exist for Customer, CreditEntry, Payment, Allocation and Reminder
-- CreditEntry has amount, due date, status and remaining
-- Payment has source: link, QR or cash
-
-**Tech requirements**
-- Supabase Postgres in the Mumbai region
-- All access from route handlers under app/api with the service role key
-- Every row carries a sandbox ID
-- Amounts stored in paise as integers
-
-### UD-04 · Razorpay test mode and webhook endpoint
-- Phase: 0
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: UD-03
-- User story: As the team, we want Razorpay connected in test mode so payment features can be built safely.
-
-**Acceptance criteria**
-- A test payment link can be created on the build deployment
-- Test webhooks reach the endpoint and signatures are verified
-- A tampered signature is rejected
-- The Razorpay secret and Supabase service role key never reach the browser
-
-**Tech requirements**
-- Official razorpay Node SDK, server side only
-- Test keys set as environment variables on the build deployment
-- Webhook route handler under app/api with signature check
-
-### UD-05 · Demo seed data
-- Phase: 0
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-03
-- User story: As the team, we want repeatable demo data so every test starts from the same state.
-
-**Acceptance criteria**
-- 5 demo customers with mixed paid and unpaid history
-- Includes customers built to land at 90%, 60% and 30% on time
-- Loads, resets and reloads cleanly
-
-**Tech requirements**
-- Seed script runnable from the command line
-- Same seed data is cloned into each new sandbox by UD-34
-
-### UD-34 · Demo merchant and session sandbox
-- Phase: 0
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: UD-03, UD-05
-- User story: As a visitor, I want my own private copy of Ramesh Kirana's shop so I can try everything without seeing anyone else's data.
-
-**Acceptance criteria**
-- No sign-up or login screen anywhere
-- Merchant name shows as Ramesh Kirana
-- A new visitor session gets its own sandbox with fresh seed data
-- Two browsers never see each other's changes
-- Reset demo in the header menu wipes the sandbox and reloads fresh seed data in one tap
-- Razorpay webhooks update only the sandbox that created the link or QR
-- Sandbox lasts until the browser is closed. Reopening starts a fresh sandbox
-
-**Tech requirements**
-- Session ID in an HTTP-only session cookie (no expiry set) mapped to a sandbox ID
-- Vercel Cron removes sandboxes with no activity for 24 hours (proposed)
-- Sandbox ID stored in Razorpay link and QR notes to route webhooks
-
-### UD-06 · Phase 0 gate
-- Phase: 0
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-01, UD-02, UD-03, UD-04, UD-05, UD-34, UD-35
-
-**Acceptance criteria**
-- Language toggle checks pass on every screen
-- Razorpay test link and webhook checks pass
-- Seed data reset works
-- Two browser sessions show separate sandboxes
-
-### UD-07 · Add customer manually
-- Phase: 1
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-03
-- User story: As a merchant, I want to add a customer by typing a name and phone number.
-
-**Acceptance criteria**
-- Name and 10 digit Indian mobile number required
-- Duplicate phone numbers are caught
-- Customer language defaults to the app language and can be changed
-
-**Tech requirements**
-- Create customer endpoint with phone validation
-
-### UD-08 · Record udhaar
-- Phase: 1
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: UD-07
-- User story: As a merchant, I want to record credit in about 10 seconds while the customer is still at the counter.
-
-**Acceptance criteria**
-- Pick an existing customer or add a new one
-- Amount rejects 0, negative and non-numeric input and accepts paise
-- Due date defaults to today plus 7 days and can be edited
-- Past due dates are blocked
-- 5 first-time testers each record an entry in 10 seconds or less
-
-**Tech requirements**
-- Create entry endpoint
-- Customer search by name or phone
-
-### UD-09 · Oldest-first clearing engine
-- Phase: 1
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: UD-03
-- User story: As a merchant, I want every payment applied to the oldest dues first without me doing anything.
-
-**Acceptance criteria**
-- Entries ₹500, ₹300, ₹200 and a ₹600 payment leave the first cleared, the second at ₹200 and the third untouched
-- Paying the exact total clears everything
-- Overpayment is held as advance and applied to the next new entry
-- Two payments at the same moment never allocate the same rupee twice
-- Deleting or correcting a payment re-runs allocation correctly
-
-**Tech requirements**
-- One allocation function used by cash, pay link and QR
-- Runs inside a database transaction
-- Unit tests for every case above
-
-### UD-10 · Cash received
-- Phase: 1
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-09
-- User story: As a merchant, I want to clear udhaar with one tap when the customer pays cash.
-
-**Acceptance criteria**
-- One tap records a full or part cash payment
-- Part payment leaves the entry open with the new balance
-- Extra amount shows as advance credit
-
-**Tech requirements**
-- Record payment endpoint with source cash, calls UD-09
-
-### UD-11 · Home summary
-- Phase: 1
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-08, UD-09
-- User story: As a merchant, I want to see at a glance how much I gave, collected and still need to collect.
-
-**Acceptance criteria**
-- Shows udhaar given this month and collected this month
-- Shows total remaining and the number of customers who owe
-- Customer count counts customers, not entries
-- Tapping remaining opens the overdue list (placeholder until UD-24)
-- Totals match a hand calculation on seed data, including across a month boundary
-
-**Tech requirements**
-- Summary endpoint with month boundaries in IST
-
-### UD-12 · Phase 1 gate
-- Phase: 1
-- Priority: Must
-- Size: S
-- Status: Ready
-- Dependencies: UD-07, UD-08, UD-09, UD-10, UD-11
-
-**Acceptance criteria**
-- All clearing unit tests pass
-- All Phase 1 screens pass in English and Hindi
-- Home totals match the ledger on seed data
+No tickets yet.
 
 ## In progress
 
@@ -643,7 +455,53 @@ No tickets yet.
 - Language saved on the device
 - Notes: first visit opens in English. Choice is saved in a cookie for 1 year. 17 of 17 checks pass in `npm run test:e2e`. Waiting on the user's review of the Hindi strings in lib/i18n/dictionaries.ts
 
+### UD-08 · Record udhaar
+- Phase: 1
+- Priority: Must
+- Size: M
+- Status: Test
+- Dependencies: UD-07
+- User story: As a merchant, I want to record credit in about 10 seconds while the customer is still at the counter.
+
+**Acceptance criteria**
+- Pick an existing customer or add a new one
+- Amount rejects 0, negative and non-numeric input and accepts paise
+- Due date defaults to today plus 7 days and can be edited
+- Past due dates are blocked
+- 5 first-time testers each record an entry in 10 seconds or less
+
+**Tech requirements**
+- Create entry endpoint
+- Customer search by name or phone
+- Notes: /app/udhaar/new, also opened from a customer with the customer preselected. New customer can be added inline in the same save. Amount keypad gets focus after picking a customer. All checks pass on hosted Supabase. Waiting on the 5 person 10 second timing test (needs real people)
+
+### UD-12 · Phase 1 gate
+- Phase: 1
+- Priority: Must
+- Size: S
+- Status: Test
+- Dependencies: UD-07, UD-08, UD-09, UD-10, UD-11
+
+**Acceptance criteria**
+- All clearing unit tests pass
+- All Phase 1 screens pass in English and Hindi
+- Home totals match the ledger on seed data
+
+### UD-06 · Phase 0 gate
+- Phase: 0
+- Priority: Must
+- Size: S
+- Status: Test
+- Dependencies: UD-01, UD-02, UD-03, UD-04, UD-05, UD-34, UD-35
+
+**Acceptance criteria**
+- Language toggle checks pass on every screen
+- Razorpay test link and webhook checks pass
+- Seed data reset works
+- The shared demo loads and Reset demo restores it
+
 ## Done
+- Notes: toggle, layout and service worker checks pass on production. Razorpay test link and live webhook pass. Reset demo restores the shared demo. Waiting on the user's review of UD-02 (Hindi strings) and UD-35 (design)
 
 ### UD-01 · App shell and navigation
 - Phase: 0
@@ -663,4 +521,155 @@ No tickets yet.
 - PWA with Serwist (manifest, icons, service worker). Install is optional
 - One Vercel project
 - Routes for home, customers, customer detail and overdue
-- Notes: all acceptance checks pass in `npm run test:e2e` (headless Chrome at 360 px). Vercel deploy is checked with UD-04
+- Notes: all acceptance checks pass in `npm run test:e2e` (headless Chrome at 360 px), locally and on the Vercel deployment
+
+### UD-03 · Data model and database
+- Phase: 0
+- Priority: Must
+- Size: M
+- Status: Done
+- Dependencies: none
+- User story: As the team, we want one clean data model so every feature reads the same numbers.
+
+**Acceptance criteria**
+- Tables exist for Customer, CreditEntry, Payment, Allocation and Reminder
+- CreditEntry has amount, due date, status and remaining
+- Payment has source: link, QR or cash
+
+**Tech requirements**
+- Supabase Postgres in the Mumbai region
+- All access from server code only (server components, server actions, route handlers) with the service role key
+- Every row carries a sandbox ID
+- Amounts stored in paise as integers
+- Notes: migrations in supabase/migrations, applied by `npm run db:migrate`. Composite foreign keys block cross sandbox links. RLS on with no policies. A trigger keeps remaining, status and paid_at in step with allocations. 19 DB tests pass on local Postgres 15. Migrated and verified on hosted Supabase (Postgres 17.6) on 2026-09-30
+
+### UD-05 · Demo seed data
+- Phase: 0
+- Priority: Must
+- Size: S
+- Status: Done
+- Dependencies: UD-03
+- User story: As the team, we want repeatable demo data so every test starts from the same state.
+
+**Acceptance criteria**
+- 5 demo customers with mixed paid and unpaid history
+- Includes customers built to land at 90%, 60% and 30% on time
+- Loads, resets and reloads cleanly
+
+**Tech requirements**
+- Seed script runnable from the command line
+- The same seed data loads the shared demo and every Reset demo (UD-34)
+- Notes: seed in lib/seed/demo-seed.ts, dates relative to today in IST. `npm run db:seed` creates, `--reset <id>` reloads, `--count <id>` checks. 7 unit tests prove the oldest first rule and the 90, 60 and 30 percent rates. Verified on hosted Supabase on 2026-09-30
+
+### UD-07 · Add customer manually
+- Phase: 1
+- Priority: Must
+- Size: S
+- Status: Done
+- Dependencies: UD-03
+- User story: As a merchant, I want to add a customer by typing a name and phone number.
+
+**Acceptance criteria**
+- Name and 10 digit Indian mobile number required
+- Duplicate phone numbers are caught
+- Customer language defaults to the app language and can be changed
+
+**Tech requirements**
+- Create customer endpoint with phone validation
+- Notes: /app/customers/new. Accepts +91, spaces and a leading 0. Duplicate phone shows a friendly error. Verified on hosted Supabase in English and Hindi
+
+### UD-09 · Oldest-first clearing engine
+- Phase: 1
+- Priority: Must
+- Size: M
+- Status: Done
+- Dependencies: UD-03
+- User story: As a merchant, I want every payment applied to the oldest dues first without me doing anything.
+
+**Acceptance criteria**
+- Entries ₹500, ₹300, ₹200 and a ₹600 payment leave the first cleared, the second at ₹200 and the third untouched
+- Paying the exact total clears everything
+- Overpayment is held as advance and applied to the next new entry
+- Two payments at the same moment never allocate the same rupee twice
+- Deleting or correcting a payment re-runs allocation correctly
+
+**Tech requirements**
+- One allocation function used by cash, pay link and QR
+- Runs inside a database transaction
+- Unit tests for every case above
+- Notes: reallocate_customer in migration 300 re-runs clearing for a customer under a row lock. A deadlock between parallel payments was found and fixed by locking before writing. 8 clearing tests pass, 41 of 41 DB and unit tests overall
+
+### UD-10 · Cash received
+- Phase: 1
+- Priority: Must
+- Size: S
+- Status: Done
+- Dependencies: UD-09
+- User story: As a merchant, I want to clear udhaar with one tap when the customer pays cash.
+
+**Acceptance criteria**
+- One tap records a full or part cash payment
+- Part payment leaves the entry open with the new balance
+- Extra amount shows as advance credit
+
+**Tech requirements**
+- Record payment endpoint with source cash, calls UD-09
+- Notes: Cash received on the customer screen is pre-filled with the full due. Extra shows as an Advance badge and is used by the next entry. Mistaken cash payments can be deleted, and clearing re-runs
+
+### UD-11 · Home summary
+- Phase: 1
+- Priority: Must
+- Size: S
+- Status: Done
+- Dependencies: UD-08, UD-09
+- User story: As a merchant, I want to see at a glance how much I gave, collected and still need to collect.
+
+**Acceptance criteria**
+- Shows udhaar given this month and collected this month
+- Shows total remaining and the number of customers who owe
+- Customer count counts customers, not entries
+- Tapping remaining opens the overdue list (placeholder until UD-24)
+- Totals match a hand calculation on seed data, including across a month boundary
+
+**Tech requirements**
+- Summary endpoint with month boundaries in IST
+- Notes: home_summary function. Totals matched a hand calculation on hosted Supabase, including a simulated 1 October month boundary. Remaining links to the overdue placeholder
+
+### UD-34 · Demo merchant and shared demo data
+- Phase: 0
+- Priority: Must
+- Size: M
+- Status: Done
+- Dependencies: UD-03, UD-05
+- User story: As a visitor, I want to open Ramesh Kirana's shop straight away and try everything without signing up.
+
+**Acceptance criteria**
+- No sign-up or login screen anywhere
+- Merchant name shows as Ramesh Kirana
+- Everyone shares one demo seeded with the UD-05 data, so no rows are created per visit
+- Reset demo in the header menu reloads the seed data for everyone in one tap, and says so
+
+**Tech requirements**
+- One fixed sandbox ID for the shared demo. The sandbox_id column stays, so per visitor sandboxes can return later
+- The shared demo is created and seeded on first use, checked once per server process
+- Notes: changed from a sandbox per browser session on 2026-09-30 (user decision). Cookie, proxy.ts and the cleanup job removed. Migration 400 removed the old per visitor sandboxes on hosted Supabase. Verified two clients see the same data, a change shows for both, and reset restores the seed
+
+### UD-04 · Razorpay test mode and webhook endpoint
+- Phase: 0
+- Priority: Must
+- Size: M
+- Status: Done
+- Dependencies: UD-03
+- User story: As the team, we want Razorpay connected in test mode so payment features can be built safely.
+
+**Acceptance criteria**
+- A test payment link can be created on the build deployment
+- Test webhooks reach the endpoint and signatures are verified (locally via `npm run webhook:send`, live via Razorpay on Vercel)
+- A tampered signature is rejected
+- The Razorpay secret and Supabase service role key never reach the browser
+
+**Tech requirements**
+- Official razorpay Node SDK, server side only
+- Test keys set as environment variables on the build deployment
+- Webhook route handler under app/api with signature check
+- Notes: `npm run razorpay:check` creates and cancels a Rs 1 test link (passes). POST /api/razorpay/webhook verifies X-Razorpay-Signature with a constant time HMAC check. `npm run webhook:send` sends signed sample events locally (paid, partially paid, QR credited and a bad signature all behave correctly). No ngrok (user decision): real Razorpay webhooks are registered only for the Vercel deployment. Deployed to https://udhaar-suite.vercel.app (Vercel project udhaar-suite, region bom1). Signed webhook to production returns 200 and shows in Vercel logs, a bad signature returns 400. Webhook registered in the Razorpay Dashboard by the user. A Rs 1 test link paid through Razorpay test netbanking delivered real payment.authorized, payment.captured and payment_link.paid webhooks to production, all verified (2026-09-30)
