@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari, TASA_Orbiter } from "next/font/google";
+import { I18nProvider } from "@/components/i18n-provider";
 import { SerwistProvider } from "@/components/serwist-provider";
+import { getLang } from "@/lib/i18n/server";
 import "./globals.css";
 
 const inter = Inter({
@@ -37,15 +39,16 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const lang = await getLang();
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${inter.variable} ${tasa.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <SerwistProvider swUrl="/serwist/sw.js" disable={process.env.NODE_ENV !== "production"}>
-          {children}
+          <I18nProvider initialLang={lang}>{children}</I18nProvider>
         </SerwistProvider>
       </body>
     </html>

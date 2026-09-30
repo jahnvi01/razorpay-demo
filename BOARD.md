@@ -18,7 +18,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | ID | Title | Phase | Priority | Size | Status |
 | --- | --- | --- | --- | --- | --- |
 | UD-01 | App shell and navigation | 0 | Must | M | Done |
-| UD-02 | English and Hindi toggle | 0 | Must | M | Ready |
+| UD-02 | English and Hindi toggle | 0 | Must | M | Test |
 | UD-03 | Data model and database | 0 | Must | M | Ready |
 | UD-04 | Razorpay test mode and webhook endpoint | 0 | Must | M | Ready |
 | UD-05 | Demo seed data | 0 | Must | S | Ready |
@@ -406,24 +406,6 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 
 ## Ready
 
-### UD-02 · English and Hindi toggle
-- Phase: 0
-- Priority: Must
-- Size: M
-- Status: Ready
-- Dependencies: UD-01
-- User story: As a merchant, I want to switch between English and Hindi with one tap.
-
-**Acceptance criteria**
-- EN | हिं toggle always visible in the header
-- Every visible string switches in one tap with no reload
-- Choice persists after closing and reopening
-- No missing keys or clipped Hindi text at 360 px
-
-**Tech requirements**
-- English and Hindi string files
-- Language saved on the device
-
 ### UD-03 · Data model and database
 - Phase: 0
 - Priority: Must
@@ -640,7 +622,26 @@ No tickets yet.
 - Blade fonts: TASA Orbiter for headings, Inter for text
 - Razorpay logo mark and icons taken from Blade
 - Layout follows the user's Razorpay dashboard screenshots in images/
-- Notes: colours, fonts, radius, shadows, logo, header, cards and nav done. 25 of 25 checks pass in `npm run test:e2e`. Waiting on the Hindi rendering check (needs UD-02) and user review
+- Notes: colours, fonts, radius, shadows, logo, header, cards and nav done. 25 of 25 checks pass in `npm run test:e2e`. Hindi rendering check passes (Noto Sans Devanagari). Waiting on user review
+
+### UD-02 · English and Hindi toggle
+- Phase: 0
+- Priority: Must
+- Size: M
+- Status: Test
+- Dependencies: UD-01
+- User story: As a merchant, I want to switch between English and Hindi with one tap.
+
+**Acceptance criteria**
+- EN | हिं toggle always visible in the header
+- Every visible string switches in one tap with no reload
+- Choice persists after closing and reopening
+- No missing keys or clipped Hindi text at 360 px
+
+**Tech requirements**
+- English and Hindi string files
+- Language saved on the device
+- Notes: first visit opens in English. Choice is saved in a cookie for 1 year. 17 of 17 checks pass in `npm run test:e2e`. Waiting on the user's review of the Hindi strings in lib/i18n/dictionaries.ts
 
 ## Done
 

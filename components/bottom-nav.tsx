@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MessageKey } from "@/lib/i18n/dictionaries";
+import { useI18n } from "./i18n-provider";
 import { ClockIcon, HomeIcon, UsersIcon } from "./icons";
 
-const tabs = [
-  { href: "/app", label: "Home", Icon: HomeIcon, isActive: (p: string) => p === "/app" },
-  { href: "/app/customers", label: "Customers", Icon: UsersIcon, isActive: (p: string) => p.startsWith("/app/customers") },
-  { href: "/app/overdue", label: "Overdue", Icon: ClockIcon, isActive: (p: string) => p.startsWith("/app/overdue") },
+const tabs: { href: string; label: MessageKey; Icon: typeof HomeIcon; isActive: (p: string) => boolean }[] = [
+  { href: "/app", label: "nav.home", Icon: HomeIcon, isActive: (p: string) => p === "/app" },
+  { href: "/app/customers", label: "nav.customers", Icon: UsersIcon, isActive: (p: string) => p.startsWith("/app/customers") },
+  { href: "/app/overdue", label: "nav.overdue", Icon: ClockIcon, isActive: (p: string) => p.startsWith("/app/overdue") },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <nav aria-label="Main" className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface">
@@ -29,7 +32,7 @@ export function BottomNav() {
               >
                 {active && <span className="absolute top-0 h-0.5 w-10 rounded-full bg-ink" aria-hidden="true" />}
                 <Icon size={22} className={active ? "text-primary" : ""} />
-                {label}
+                {t(label)}
               </Link>
             </li>
           );

@@ -1,11 +1,13 @@
 import { Placeholder } from "@/components/placeholder";
 import { SectionHeader } from "@/components/ui";
+import { getT } from "@/lib/i18n/server";
 
-export default function OverduePage() {
+export default async function OverduePage() {
+  const t = await getT();
   return (
     <div>
-      <SectionHeader title="Overdue" />
-      <Placeholder body="Customers who are past their due date will show here." />
+      <SectionHeader title={t("overdue.title")} />
+      <Placeholder body={t("overdue.placeholder")} />
     </div>
   );
 }

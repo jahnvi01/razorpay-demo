@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "./i18n-provider";
 import { MoreVerticalIcon, RefreshIcon } from "./icons";
+import { LanguageToggle } from "./language-toggle";
 import { RazorpayLogo } from "./razorpay-logo";
 
 export const MERCHANT_NAME = "Ramesh Kirana";
@@ -11,6 +13,7 @@ const topbarButton =
   "flex h-10 w-10 items-center justify-center rounded-[10px] border border-topbar-border bg-topbar-button text-white transition-colors duration-200 ease-standard hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export function AppHeader() {
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,18 +29,16 @@ export function AppHeader() {
   return (
     <header className="pt-safe sticky top-0 z-20 bg-topbar">
       <div className="flex h-16 items-center gap-2 px-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           <RazorpayLogo />
-          <span className="h-5 w-px bg-topbar-border" aria-hidden="true" />
-          <span className="truncate text-[15px] font-semibold text-primary-on-dark">Udhaar Suite</span>
+          <span className="truncate pl-[25px] text-xs leading-4 font-semibold text-primary-on-dark">{t("app.name")}</span>
         </div>
 
-        {/* Language toggle slot: UD-02 */}
-
         <div ref={menuRef} className="relative flex items-center gap-2">
+          <LanguageToggle />
           <button
             type="button"
-            aria-label="Menu"
+            aria-label={t("header.menu")}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
@@ -60,7 +61,7 @@ export function AppHeader() {
             >
               <div className="border-b border-line px-4 py-3">
                 <p className="text-sm font-semibold text-ink">{MERCHANT_NAME}</p>
-                <p className="text-xs text-ink-muted">Demo merchant · Test mode</p>
+                <p className="text-xs text-ink-muted">{t("header.merchantRole")}</p>
               </div>
               {/* Wired up in UD-34 */}
               <button
@@ -71,8 +72,8 @@ export function AppHeader() {
               >
                 <RefreshIcon size={18} />
                 <span className="flex flex-col">
-                  <span className="font-medium">Reset demo</span>
-                  <span className="text-xs">Available soon</span>
+                  <span className="font-medium">{t("header.resetDemo")}</span>
+                  <span className="text-xs">{t("header.comingSoon")}</span>
                 </span>
               </button>
             </div>

@@ -1,11 +1,13 @@
 import { Placeholder } from "@/components/placeholder";
 import { SectionHeader } from "@/components/ui";
+import { getT } from "@/lib/i18n/server";
 
-export default function CustomersPage() {
+export default async function CustomersPage() {
+  const t = await getT();
   return (
     <div>
-      <SectionHeader title="Customers" />
-      <Placeholder body="Your customers and what each one owes will show here." />
+      <SectionHeader title={t("customers.title")} />
+      <Placeholder body={t("customers.placeholder")} />
     </div>
   );
 }

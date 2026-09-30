@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "node tests/e2e/ud01-shell.mjs"
+    "test:e2e": "node tests/e2e/ud01-shell.mjs && node tests/e2e/ud02-language.mjs"
   },
   "dependencies": {
     "@serwist/turbopack": "^9.5.12",
     "next": "16.3.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
     "serwist": "^9.5.12"
   },
   "devDependencies": {
