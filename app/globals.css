@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/*
+ * Razorpay Blade design tokens (light theme), mapped to Tailwind.
+ * Source: @razorpay/blade tokens (MIT), https://github.com/razorpay/blade
+ */
+@theme {
+  /* Fonts: Inter for text, TASA Orbiter for headings */
+  --font-sans: var(--font-inter), var(--font-devanagari), "Inter Fallback Arial", Arial, sans-serif;
+  --font-heading: var(--font-tasa), var(--font-devanagari), "TASA Orbiter Fallback Arial", Arial, sans-serif;
+
+  /* Interactive primary (azure) */
+  --color-primary: hsl(218 89% 51%);
+  --color-primary-hover: hsl(218 87% 43%);
+  --color-primary-faded: hsla(218 89% 51% / 0.09);
+  --color-primary-faded-hover: hsla(218 89% 51% / 0.18);
+  --color-primary-on-dark: hsl(218 100% 73%);
+
+  /* Surfaces */
+  --color-page: hsl(0 0% 97%);
+  --color-surface: hsl(0 0% 100%);
+  --color-topbar: hsl(0 0% 0%);
+  --color-topbar-button: hsl(0 0% 13%);
+  --color-topbar-border: hsl(0 0% 26%);
+  --color-gray-faded: hsla(206 10% 29% / 0.06);
+  --color-gray-faded-hover: hsla(206 10% 29% / 0.12);
+
+  /* Borders */
+  --color-line: hsl(204 8% 88%);
+  --color-line-strong: hsl(203 8% 80%);
+
+  /* Text */
+  --color-ink: hsl(0 0% 2%);
+  --color-ink-subtle: hsl(200 10% 18%);
+  --color-ink-muted: hsl(204 9% 42%);
+  --color-ink-disabled: hsla(206 10% 29% / 0.32);
+
+  /* Feedback */
+  --color-positive: hsl(150 100% 23%);
+  --color-positive-intense: hsl(150 100% 28%);
+  --color-positive-subtle: hsla(150 100% 28% / 0.09);
+  --color-negative: hsl(4 85% 44%);
+  --color-negative-subtle: hsla(4 85% 44% / 0.09);
+  --color-notice: hsl(25 100% 39%);
+  --color-notice-subtle: hsla(25 100% 44% / 0.09);
+  --color-information: hsl(200 100% 33%);
+  --color-information-subtle: hsla(200 100% 41% / 0.09);
+  --color-support: hsl(215 25% 30%);
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Elevation */
+  --shadow-low: 0px 2px 4px 0px hsla(200 10% 18% / 0.06);
+  --shadow-mid: 0px 16px 12px 0px hsla(200 10% 18% / 0.06);
+  --shadow-high: 0px 8px 24px -4px hsla(200 10% 18% / 0.06);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.3, 0, 0.2, 1);
+  --ease-entrance: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.17, 0, 1, 1);
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
