@@ -56,7 +56,7 @@ describe.skipIf(!hasDb)("database", () => {
         ["Arjun Mehta", 130000],
         ["Farhan Qureshi", 110000],
         ["Farhan Qureshi", 75000],
-        ["Gurpreet Singh", 175000],
+        ["Gurpreet Singh", 100000],
         ["Lakshmi Iyer", 54000],
         ["Sunita Sharma", 110000],
       ]);

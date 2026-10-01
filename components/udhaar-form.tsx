@@ -7,8 +7,10 @@ import { CustomerFields } from "./customer-fields";
 import { AmountInput, Field, FormError, PrimaryButton, TextInput } from "./form";
 import { useI18n } from "./i18n-provider";
 import { PlusIcon, SearchIcon } from "./icons";
+import { TrustMeter } from "./trust-meter";
+import { MIN_CLEARED_FOR_TRUST, type Trust } from "@/lib/trust";
 
-export type PickerCustomer = { id: string; name: string; phone: string; duePaise: number };
+export type PickerCustomer = { id: string; name: string; phone: string; duePaise: number; trust: Trust | null };
 
 /** UD-08 Record udhaar: pick or add a customer, type the amount, save. */
 export function UdhaarForm({
@@ -74,6 +76,9 @@ export function UdhaarForm({
             </button>
           </div>
         )}
+
+        {/* UD-23 Trust Meter before saving */}
+        {mode === "existing" && selected?.trust && <TrustMeter trust={selected.trust} minCleared={MIN_CLEARED_FOR_TRUST} />}
 
         {mode === "existing" && !selected && (
           <div className="space-y-2">

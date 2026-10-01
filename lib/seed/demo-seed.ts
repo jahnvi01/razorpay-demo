@@ -10,6 +10,9 @@
 //   Farhan Qureshi  3 of 10  = 30%  often late, two open entries past due
 //   Lakshmi Iyer    2 of 2          not enough history (fewer than 3 cleared)
 //   Gurpreet Singh  4 of 4  = 100%  one entry cleared in two part payments, one open entry past due
+//
+// Some activity always happens on the seed day itself (Sunita and Lakshmi take udhaar, Arjun and
+// Gurpreet pay part of theirs), so the home screen's "This month" is never empty, even on the 1st.
 
 import { addDays, atIST, todayIST, type IsoDate } from "../dates.ts";
 
@@ -19,6 +22,8 @@ export type SeedPayment = {
   amount_paise: number;
   source: PaymentSource;
   received_at: string;
+  /** UPI ID for link and QR payments, so shop QR payments can be recognised (UD-19). */
+  payer_vpa?: string;
   allocations: { entry: number; amount_paise: number }[];
 };
 
@@ -46,14 +51,18 @@ type EntrySpec = {
   parts?: { rupees: number; ago: number }[];
 };
 
-type CustomerSpec = { name: string; phone: string; language: "en" | "hi"; entries: EntrySpec[] };
+type CustomerSpec = { name: string; phone: string; language: "en" | "hi"; vpa: string; entries: EntrySpec[] };
+
+/** Arjun and Lakshmi each paid once from this shared family UPI, to show an ambiguous QR match. */
+export const SHARED_FAMILY_VPA = "iyer.mehta.family@okaxis";
 
 const SOURCES: PaymentSource[] = ["cash", "link", "qr"];
 
 const DEMO_CUSTOMERS: CustomerSpec[] = [
   {
     name: "Sunita Sharma",
-    phone: "9000000101",
+    vpa: "sunita.sharma@okicici",
+    phone: "7228070222",
     language: "hi",
     entries: [
       { rupees: 450, createdAgo: 100, term: 7, paidAfterDue: -2, note: "Monthly ration" },
@@ -66,12 +75,13 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 760, createdAgo: 37, term: 7, paidAfterDue: 0 },
       { rupees: 1500, createdAgo: 28, term: 7, paidAfterDue: -1 },
       { rupees: 820, createdAgo: 19, term: 7, paidAfterDue: -2 },
-      { rupees: 1100, createdAgo: 3, term: 7 },
+      { rupees: 1100, createdAgo: 0, term: 7, note: "Monthly ration" },
     ],
   },
   {
     name: "Arjun Mehta",
-    phone: "9000000102",
+    vpa: "arjun.mehta@okhdfcbank",
+    phone: "8780670895",
     language: "en",
     entries: [
       { rupees: 1250, createdAgo: 80, term: 10, paidAfterDue: 0 },
@@ -79,12 +89,13 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 2100, createdAgo: 50, term: 10, paidAfterDue: -2 },
       { rupees: 900, createdAgo: 35, term: 10, paidAfterDue: 3 },
       { rupees: 450, createdAgo: 20, term: 10, paidAfterDue: -1 },
-      { rupees: 1800, createdAgo: 6, term: 10, parts: [{ rupees: 500, ago: 2 }], note: "Rice and oil" },
+      { rupees: 1800, createdAgo: 6, term: 10, parts: [{ rupees: 500, ago: 0 }], note: "Rice and oil" },
     ],
   },
   {
     name: "Farhan Qureshi",
-    phone: "9000000103",
+    vpa: "farhan.q@ybl",
+    phone: "7600821798",
     language: "en",
     entries: [
       { rupees: 700, createdAgo: 120, term: 7, paidAfterDue: 6 },
@@ -103,24 +114,26 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
   },
   {
     name: "Lakshmi Iyer",
-    phone: "9000000104",
+    vpa: "lakshmi.iyer@oksbi",
+    phone: "9737659505",
     language: "en",
     entries: [
       { rupees: 380, createdAgo: 20, term: 5, paidAfterDue: -1 },
       { rupees: 620, createdAgo: 12, term: 5, paidAfterDue: 0 },
-      { rupees: 540, createdAgo: 2, term: 5 },
+      { rupees: 540, createdAgo: 0, term: 5 },
     ],
   },
   {
     name: "Gurpreet Singh",
-    phone: "9000000105",
+    vpa: "gurpreet.singh@paytm",
+    phone: "7600046578",
     language: "hi",
     entries: [
       { rupees: 900, createdAgo: 60, term: 7, paidAfterDue: -1 },
       { rupees: 1300, createdAgo: 45, term: 7, paidAfterDue: 0 },
       { rupees: 1400, createdAgo: 32, term: 7, parts: [{ rupees: 600, ago: 28 }, { rupees: 800, ago: 25 }] },
       { rupees: 560, createdAgo: 24, term: 7, paidAfterDue: -2 },
-      { rupees: 1750, createdAgo: 19, term: 7, note: "Wedding supplies" },
+      { rupees: 1750, createdAgo: 19, term: 7, parts: [{ rupees: 750, ago: 0 }], note: "Wedding supplies" },
     ],
   },
 ];
@@ -135,6 +148,8 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
       const firstEntryAgo = Math.max(...spec.entries.map((e) => e.createdAgo));
       const entries: SeedEntry[] = [];
       const payments: SeedPayment[] = [];
+      const usesFamilyVpa = spec.name === "Arjun Mehta" || spec.name === "Lakshmi Iyer";
+      let onlinePayments = 0;
 
       spec.entries.forEach((e, index) => {
         const created = addDays(today, -e.createdAgo);
@@ -142,7 +157,7 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
         entries.push({
           amount_paise: e.rupees * 100,
           due_date: due,
-          created_at: atIST(created, "10:30"),
+          created_at: atIST(created, e.createdAgo === 0 ? "09:00" : "10:30"),
           ...(e.note ? { note: e.note } : {}),
         });
 
@@ -150,10 +165,13 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
           e.parts ??
           (e.paidAfterDue === undefined ? [] : [{ rupees: e.rupees, ago: e.createdAgo - e.term - e.paidAfterDue }]);
         for (const part of parts) {
+          const source = nextSource();
+          const vpa = source === "cash" ? undefined : usesFamilyVpa && onlinePayments++ === 0 ? SHARED_FAMILY_VPA : spec.vpa;
           payments.push({
             amount_paise: part.rupees * 100,
-            source: nextSource(),
-            received_at: atIST(addDays(today, -part.ago), "18:15"),
+            source,
+            received_at: atIST(addDays(today, -part.ago), part.ago === 0 ? "09:30" : "18:15"),
+            ...(vpa ? { payer_vpa: vpa } : {}),
             allocations: [{ entry: index, amount_paise: part.rupees * 100 }],
           });
         }

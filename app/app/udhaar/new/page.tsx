@@ -3,6 +3,7 @@ import { ChevronLeftIcon } from "@/components/icons";
 import { SectionHeader } from "@/components/ui";
 import { UdhaarForm } from "@/components/udhaar-form";
 import { listCustomers } from "@/lib/data/customers";
+import { getTrustByCustomer } from "@/lib/data/trust";
 import { todayIST } from "@/lib/dates";
 import { getT } from "@/lib/i18n/server";
 import { requireSandbox } from "@/lib/sandbox/server";
@@ -10,10 +11,12 @@ import { defaultDueDate } from "@/lib/validation";
 
 /** UD-08 Record udhaar. ?customer=<id> preselects a customer. */
 export default async function NewUdhaarPage({ searchParams }: PageProps<"/app/udhaar/new">) {
-  const [{ customer }, t, customers] = await Promise.all([
+  const sandboxId = await requireSandbox();
+  const [{ customer }, t, customers, trust] = await Promise.all([
     searchParams,
     getT(),
-    requireSandbox().then(listCustomers),
+    listCustomers(sandboxId),
+    getTrustByCustomer(sandboxId),
   ]);
   const preselectedId = typeof customer === "string" ? customer : null;
   const today = todayIST();
@@ -29,7 +32,7 @@ export default async function NewUdhaarPage({ searchParams }: PageProps<"/app/ud
       </Link>
       <SectionHeader title={t("udhaar.title")} />
       <UdhaarForm
-        customers={customers.map(({ id, name, phone, duePaise }) => ({ id, name, phone, duePaise }))}
+        customers={customers.map(({ id, name, phone, duePaise }) => ({ id, name, phone, duePaise, trust: trust.get(id) ?? null }))}
         preselectedId={preselectedId}
         defaultDue={defaultDueDate(today)}
         today={today}

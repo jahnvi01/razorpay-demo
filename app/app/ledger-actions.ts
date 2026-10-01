@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { appUrl } from "@/lib/app-url";
 import {
   createCustomer,
   createEntry,
@@ -10,6 +11,7 @@ import {
   recordCashPayment,
 } from "@/lib/data/ledger";
 import type { MessageKey } from "@/lib/i18n/dictionaries";
+import { syncPayLink } from "@/lib/razorpay/pay-links";
 import { requireSandbox } from "@/lib/sandbox/server";
 import { parseAmount, parseDueDate, parseName, parseNote, parsePhone } from "@/lib/validation";
 
@@ -23,6 +25,20 @@ export type FormState = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const lang = (v: FormDataEntryValue | null): "en" | "hi" => (v === "hi" ? "hi" : "en");
 const isDuplicatePhone = (err: unknown) => err instanceof LedgerError && err.code === PG_UNIQUE_VIOLATION;
+
+/**
+ * UD-13 and UD-15 After a balance change: refresh the pay link and let Razorpay SMS it.
+ * A Razorpay failure never undoes the ledger change. It only shows a warning on the next screen.
+ */
+async function afterBalanceChange(sandboxId: string, customerId: string): Promise<string> {
+  try {
+    const state = await syncPayLink(sandboxId, customerId, { sms: "update", baseUrl: await appUrl() });
+    return state.smsSent ? "&sms=sent" : "";
+  } catch (err) {
+    console.error("pay link update failed", err);
+    return "&link=failed";
+  }
+}
 
 function newCustomerFrom(form: FormData, fieldErrors: FormState["fieldErrors"] & object) {
   const name = parseName(form.get("name"));
@@ -81,7 +97,8 @@ export async function createEntryAction(_prev: FormState, form: FormData): Promi
     console.error(err);
     return { error: "form.saveFailed" };
   }
-  redirect(`/app/customers/${result.customerId}?saved=udhaar&amount=${amount.value}`);
+  const linkStatus = await afterBalanceChange(sandboxId, result.customerId);
+  redirect(`/app/customers/${result.customerId}?saved=udhaar&amount=${amount.value}${linkStatus}`);
 }
 
 /** UD-10 Cash received: full or part payment, extra becomes advance credit. */
@@ -98,7 +115,8 @@ export async function recordCashAction(_prev: FormState, form: FormData): Promis
     console.error(err);
     return { error: "form.saveFailed" };
   }
-  redirect(`/app/customers/${customerId}?saved=cash&amount=${amount.value}`);
+  const linkStatus = await afterBalanceChange(sandboxId, customerId);
+  redirect(`/app/customers/${customerId}?saved=cash&amount=${amount.value}${linkStatus}`);
 }
 
 /** UD-09 Delete a mistaken cash payment. Clearing re-runs for that customer. */
@@ -107,5 +125,6 @@ export async function deletePaymentAction(form: FormData): Promise<void> {
   if (!UUID.test(paymentId)) return;
   const sandboxId = await requireSandbox();
   const customerId = await deleteCashPayment(sandboxId, paymentId);
-  redirect(`/app/customers/${customerId}?saved=deleted`);
+  const linkStatus = await afterBalanceChange(sandboxId, customerId);
+  redirect(`/app/customers/${customerId}?saved=deleted${linkStatus}`);
 }

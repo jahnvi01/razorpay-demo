@@ -37,12 +37,27 @@ visitors. **Reset demo** in the header menu reloads the seed data for everyone.
   (`-- payment_link.partially_paid`, `-- qr_code.credited`, `-- --bad-signature`, `-- --url http://...`).
 - Payment status is also synced when a screen opens (UD-18), so local testing needs no tunnel.
 
+## Scheduled jobs (Vercel Cron, `vercel.json`)
+
+| Job | When | What |
+| --- | --- | --- |
+| `/api/cron/day-before` | 10:00 IST daily | SMS reminder for udhaar due tomorrow (skips demo customers) |
+| `/api/cron/ledger-check` | 02:00 IST daily | Ledger consistency report plus Razorpay payments missing from the ledger. `ok: false` is logged as an error |
+
+Both require `Authorization: Bearer $CRON_SECRET`. Run one by hand:
+`curl -H "Authorization: Bearer $CRON_SECRET" https://udhaar-suite.vercel.app/api/cron/ledger-check`
+
+## Pilot
+
+See `PILOT.md` for the 5-merchant pilot script (UD-26) and the 10-second udhaar check (UD-08).
+
 ## Tests
 
 | Command | What it checks | Needs |
 | --- | --- | --- |
 | `npm test` | Unit tests. DB tests too when `TEST_DATABASE_ADMIN_URL` is set | Local Postgres for DB tests |
 | `npm run test:e2e` | Browser tests at 360 px against a running production server on port 3100 | Chrome, local stack below |
+| `npm run test:journey` | UD-26 end-to-end merchant journey, 3 runs in English and 3 in Hindi (`-- --base <url> --slow --with-sms --sms-to <number>`) | A running app, `.env.local` |
 | `npm run lint` | ESLint | |
 
 Local stack for DB and e2e tests (never touches the hosted project):

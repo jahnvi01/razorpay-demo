@@ -2,11 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CashReceived } from "@/components/cash-received";
 import { DeletePaymentButton } from "@/components/delete-payment";
-import { ButtonLink, SuccessBanner } from "@/components/form";
+import { SendUpdate } from "@/components/send-update";
+import { TrustMeter } from "@/components/trust-meter";
+import { getTrustByCustomer } from "@/lib/data/trust";
+import { MIN_CLEARED_FOR_TRUST } from "@/lib/trust";
+import { ButtonLink, FormError, SuccessBanner } from "@/components/form";
 import { ChevronLeftIcon, PlusIcon } from "@/components/icons";
 import { Amount, Badge, Card, SectionHeader } from "@/components/ui";
+import { appUrl } from "@/lib/app-url";
 import { formatPhone } from "@/lib/data/customers";
 import { getCustomerLedger } from "@/lib/data/ledger";
+import { syncLinkPaymentsOnOpen } from "@/lib/payments/online";
 import { todayIST } from "@/lib/dates";
 import { formatDate, formatRupees } from "@/lib/format";
 import type { MessageKey, Translate } from "@/lib/i18n/dictionaries";
@@ -38,11 +44,16 @@ function savedMessage(t: Translate, saved: unknown, amount: unknown): string | n
 
 export default async function CustomerDetailPage({ params, searchParams }: PageProps<"/app/customers/[id]">) {
   const [{ id }, query, t, lang, sandboxId] = await Promise.all([params, searchParams, getT(), getLang(), requireSandbox()]);
-  const customer = await getCustomerLedger(sandboxId, id);
+  // UD-18 Sync on open: pick up any pay link payment Razorpay has not told us about yet.
+  if (/^[0-9a-f-]{36}$/i.test(id)) await syncLinkPaymentsOnOpen(sandboxId, id, await appUrl());
+  const [customer, trustMap] = await Promise.all([getCustomerLedger(sandboxId, id), getTrustByCustomer(sandboxId)]);
   if (!customer) notFound();
+  const trust = trustMap.get(customer.id);
 
   const today = todayIST();
   const banner = savedMessage(t, query.saved, query.amount);
+  const smsNote = query.sms === "sent" ? t("share.smsSent") : null;
+  const statementUrl = `${await appUrl()}/s/${customer.statementToken}`;
 
   return (
     <div className="space-y-4">
@@ -50,7 +61,8 @@ export default async function CustomerDetailPage({ params, searchParams }: PageP
         <ChevronLeftIcon size={16} />
         {t("customer.back")}
       </Link>
-      {banner && <SuccessBanner message={banner} />}
+      {banner && <SuccessBanner message={smsNote ? `${banner}. ${smsNote}.` : banner} />}
+      {query.link === "failed" && <FormError message={t("share.linkFailed")} />}
       <div>
         <SectionHeader title={customer.name} />
         <p className="-mt-2 text-sm text-ink-muted">{formatPhone(customer.phone)}</p>
@@ -74,6 +86,8 @@ export default async function CustomerDetailPage({ params, searchParams }: PageP
         </p>
       </Card>
 
+      {trust && <TrustMeter trust={trust} minCleared={MIN_CLEARED_FOR_TRUST} />}
+
       <div className="grid grid-cols-2 gap-3">
         <ButtonLink href={`/app/udhaar/new?customer=${customer.id}`}>
           <PlusIcon size={18} />
@@ -84,6 +98,18 @@ export default async function CustomerDetailPage({ params, searchParams }: PageP
           <CashReceived customerId={customer.id} duePaise={customer.duePaise} />
         </div>
       </div>
+
+      <SendUpdate
+        customerId={customer.id}
+        duePaise={customer.duePaise}
+        payUrl={customer.payUrl}
+        statementUrl={statementUrl}
+        lastSmsAt={customer.lastSmsAt}
+        savedKind={typeof query.saved === "string" ? query.saved : undefined}
+        savedAmount={typeof query.amount === "string" ? query.amount : undefined}
+        highlight={query.saved === "udhaar" || query.saved === "cash"}
+        isDemo={customer.isDemo}
+      />
 
       <section>
         <h3 className="mb-2 font-heading text-base font-semibold text-ink">{t("customer.entries")}</h3>

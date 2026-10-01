@@ -1,10 +1,12 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 // Shared Razorpay-style building blocks.
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Card({ children, className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`rounded-lg border border-line bg-surface shadow-low ${className}`}>{children}</div>
+    <div {...props} className={`rounded-lg border border-line bg-surface shadow-low ${className}`}>
+      {children}
+    </div>
   );
 }
 

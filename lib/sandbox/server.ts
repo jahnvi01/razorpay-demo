@@ -1,6 +1,7 @@
 import "server-only";
 import { todayIST } from "@/lib/dates";
 import { buildDemoSeed } from "@/lib/seed/demo-seed";
+import { cancelAllPayLinks } from "@/lib/razorpay/pay-links";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /**
@@ -32,8 +33,9 @@ export async function requireSandbox(): Promise<string> {
   return DEMO_SANDBOX_ID;
 }
 
-/** Reset demo: wipes the shared demo for everyone and loads fresh seed data. */
+/** Reset demo: wipes the shared demo for everyone and loads fresh seed data. No SMS is sent. */
 export async function resetDemo(): Promise<void> {
+  await cancelAllPayLinks(DEMO_SANDBOX_ID); // old links must not stay payable
   const { error } = await supabaseAdmin().rpc("reset_sandbox", {
     p_sandbox_id: DEMO_SANDBOX_ID,
     p_seed: buildDemoSeed(todayIST()),

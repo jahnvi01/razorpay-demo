@@ -128,6 +128,10 @@ export type CustomerLedger = {
   duePaise: number;
   advancePaise: number;
   overdue: boolean;
+  payUrl: string | null;
+  statementToken: string;
+  lastSmsAt: string | null;
+  isDemo: boolean;
 };
 
 /** Full ledger for one customer, only if it belongs to this sandbox. Newest first. */
@@ -136,7 +140,8 @@ export async function getCustomerLedger(sandboxId: string, customerId: string): 
   const { data, error } = await supabaseAdmin()
     .from("customers")
     .select(
-      `id, name, phone, language,
+      `id, name, phone, language, pay_link_url, statement_token, is_demo,
+       reminders(channel, sent_at),
        credit_entries(id, amount_paise, remaining_paise, due_date, note, status, created_at, paid_at),
        payments(id, amount_paise, source, received_at, allocations(amount_paise))`,
     )
@@ -178,5 +183,14 @@ export async function getCustomerLedger(sandboxId: string, customerId: string): 
     duePaise: open.reduce((s, e) => s + e.remainingPaise, 0),
     advancePaise: payments.reduce((s, p) => s + p.amountPaise, 0) - allocated,
     overdue: open.some((e) => e.dueDate < today),
+    payUrl: data.pay_link_url,
+    statementToken: data.statement_token,
+    isDemo: data.is_demo,
+    lastSmsAt:
+      data.reminders
+        .filter((r: { channel: string }) => r.channel === "sms")
+        .map((r: { sent_at: string }) => r.sent_at)
+        .sort()
+        .at(-1) ?? null,
   };
 }

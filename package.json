@@ -14,7 +14,8 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "razorpay:check": "node --env-file-if-exists=.env.local scripts/razorpay-check.mts",
     "tunnel": "ngrok http 3000",
-    "webhook:send": "node --env-file-if-exists=.env.local scripts/webhook-send.mts"
+    "webhook:send": "node --env-file-if-exists=.env.local scripts/webhook-send.mts",
+    "test:journey": "node --env-file-if-exists=.env.local tests/e2e/journey.mjs"
   },
   "dependencies": {
     "@serwist/turbopack": "^9.5.12",

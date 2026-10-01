@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/form";
 import { ChevronRightIcon, PlusIcon } from "@/components/icons";
+import { countPendingQr } from "@/lib/payments/qr";
 import { Amount, Card, SectionHeader } from "@/components/ui";
 import { getHomeSummary } from "@/lib/data/ledger";
 import { getT } from "@/lib/i18n/server";
@@ -8,10 +9,20 @@ import { requireSandbox } from "@/lib/sandbox/server";
 
 /** UD-11 Home summary for this month (IST). */
 export default async function HomePage() {
-  const [t, summary] = await Promise.all([getT(), requireSandbox().then((id) => getHomeSummary(id))]);
+  const sandboxId = await requireSandbox();
+  const [t, summary, pendingQr] = await Promise.all([getT(), getHomeSummary(sandboxId), countPendingQr(sandboxId)]);
 
   return (
     <div className="space-y-4">
+      {pendingQr > 0 && (
+        <Link
+          href="/app/qr"
+          className="flex items-center justify-between rounded-md bg-notice-subtle px-4 py-3 text-sm font-semibold text-notice"
+        >
+          {t("home.qrReview", { count: pendingQr })}
+          <ChevronRightIcon size={16} />
+        </Link>
+      )}
       <SectionHeader
         title={t("home.title")}
         action={<span className="pb-0.5 text-sm font-semibold text-primary">{t("home.period")}</span>}
@@ -51,6 +62,9 @@ export default async function HomePage() {
       <ButtonLink href="/app/udhaar/new">
         <PlusIcon size={18} />
         {t("udhaar.new")}
+      </ButtonLink>
+      <ButtonLink href="/app/qr" variant="secondary">
+        {t("qr.open")}
       </ButtonLink>
     </div>
   );

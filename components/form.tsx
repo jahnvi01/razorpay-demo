@@ -70,11 +70,21 @@ export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSe
   return <select {...props} className={`${control} border-line-strong ${className}`} />;
 }
 
-export function PrimaryButton({ children, className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+const PRIMARY_TONES = {
+  primary: "bg-primary hover:bg-primary-hover disabled:bg-primary/60",
+  whatsapp: "bg-[#1DA851] hover:bg-[#178a43] disabled:bg-[#1DA851]/60",
+};
+
+export function PrimaryButton({
+  children,
+  className = "",
+  tone = "primary",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone?: keyof typeof PRIMARY_TONES }) {
   return (
     <button
       {...props}
-      className={`flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 text-[15px] font-semibold text-white transition-colors duration-200 ease-standard hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:bg-primary/60 ${className}`}
+      className={`flex h-12 w-full items-center justify-center gap-2 rounded-sm px-4 text-[15px] font-semibold text-white transition-colors duration-200 ease-standard focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait ${PRIMARY_TONES[tone]} ${className}`}
     >
       {children}
     </button>

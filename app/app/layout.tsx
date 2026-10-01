@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/app-header";
 import { BottomNav } from "@/components/bottom-nav";
+import { LiveRefresh } from "@/components/live-refresh";
 
 export default function AppLayout({ children }: LayoutProps<"/app">) {
   return (
@@ -7,6 +8,7 @@ export default function AppLayout({ children }: LayoutProps<"/app">) {
       <AppHeader />
       <main className="flex-1 px-4 pt-5 pb-24">{children}</main>
       <BottomNav />
+      <LiveRefresh />
     </div>
   );
 }
