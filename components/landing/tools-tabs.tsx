@@ -49,7 +49,7 @@ const TOOLS: Tool[] = [
     eyebrow: "lp.t2.e",
     body: "lp.t2.b",
     ticks: ["lp.t2.k1", "lp.t2.k2", "lp.t2.k3"],
-    href: "/app/overdue",
+    href: "/app/dues",
     Demo: OverdueDemo,
   },
   {

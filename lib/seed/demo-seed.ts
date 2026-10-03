@@ -11,8 +11,9 @@
 //   Lakshmi Iyer    2 of 2          not enough history (fewer than 3 cleared)
 //   Gurpreet Singh  4 of 4  = 100%  one entry cleared in two part payments, one open entry past due
 //
-// Some activity always happens on the seed day itself (Sunita and Lakshmi take udhaar, Arjun and
-// Gurpreet pay part of theirs), so the home screen's "This month" is never empty, even on the 1st.
+// This month (UD-46): entries marked `recent` always land in the current month, even on the 1st,
+// so the home screen shows ₹8,265 given and ₹2,030 collected this month, while older
+// overdue udhaar from last month keeps Remaining higher.
 
 import { addDays, atIST, todayIST, type IsoDate } from "../dates.ts";
 import { SHOP_QR_ENABLED } from "../features.ts";
@@ -50,6 +51,8 @@ type EntrySpec = {
   paidAfterDue?: number;
   /** Paid in parts: each part in rupees and days before today. */
   parts?: { rupees: number; ago: number }[];
+  /** Keep this entry (and its parts) inside the current month: days ago are capped at the 1st. */
+  recent?: boolean;
 };
 
 type CustomerSpec = { name: string; phone: string; language: "en" | "hi"; vpa: string; entries: EntrySpec[] };
@@ -77,7 +80,8 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 760, createdAgo: 37, term: 7, paidAfterDue: 0 },
       { rupees: 1500, createdAgo: 28, term: 7, paidAfterDue: -1 },
       { rupees: 820, createdAgo: 19, term: 7, paidAfterDue: -2 },
-      { rupees: 1100, createdAgo: 0, term: 7, note: "Monthly ration" },
+      { rupees: 1485, createdAgo: 2, term: 10, recent: true, note: "Festival shopping" },
+      { rupees: 1200, createdAgo: 0, term: 7, recent: true, note: "Monthly ration" },
     ],
   },
   {
@@ -91,7 +95,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 2100, createdAgo: 50, term: 10, paidAfterDue: -2 },
       { rupees: 900, createdAgo: 35, term: 10, paidAfterDue: 3 },
       { rupees: 450, createdAgo: 20, term: 10, paidAfterDue: -1 },
-      { rupees: 1800, createdAgo: 6, term: 10, parts: [{ rupees: 500, ago: 0 }], note: "Rice and oil" },
+      { rupees: 1830, createdAgo: 6, term: 10, recent: true, parts: [{ rupees: 520, ago: 0 }], note: "Rice and oil" },
     ],
   },
   {
@@ -110,8 +114,9 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 990, createdAgo: 50, term: 7, paidAfterDue: 3 },
       { rupees: 430, createdAgo: 40, term: 7, paidAfterDue: 0 },
       { rupees: 1250, createdAgo: 30, term: 7, paidAfterDue: 6 },
-      { rupees: 1400, createdAgo: 22, term: 7, parts: [{ rupees: 300, ago: 10 }] },
+      { rupees: 1400, createdAgo: 22, term: 7, parts: [{ rupees: 300, ago: 10 }, { rupees: 760, ago: 0 }] },
       { rupees: 750, createdAgo: 12, term: 7 },
+      { rupees: 1035, createdAgo: 3, term: 7, recent: true },
     ],
   },
   {
@@ -122,7 +127,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
     entries: [
       { rupees: 380, createdAgo: 20, term: 5, paidAfterDue: -1 },
       { rupees: 620, createdAgo: 12, term: 5, paidAfterDue: 0 },
-      { rupees: 540, createdAgo: 0, term: 5 },
+      { rupees: 575, createdAgo: 0, term: 5, recent: true },
     ],
   },
   {
@@ -136,12 +141,15 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 1400, createdAgo: 32, term: 7, parts: [{ rupees: 600, ago: 28 }, { rupees: 800, ago: 25 }] },
       { rupees: 560, createdAgo: 24, term: 7, paidAfterDue: -2 },
       { rupees: 1750, createdAgo: 19, term: 7, parts: [{ rupees: 750, ago: 0 }], note: "Wedding supplies" },
+      { rupees: 2140, createdAgo: 4, term: 10, recent: true, note: "Shop supplies" },
     ],
   },
 ];
 
 /** Builds the seed for a given IST date. Deterministic: same date, same seed. */
 export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
+  const daysIntoMonth = Number(today.slice(8, 10)) - 1; // 0 on the 1st
+  const cap = (ago: number, recent?: boolean) => (recent ? Math.min(ago, daysIntoMonth) : ago);
   let sourceIndex = 0;
   const nextSource = () => SOURCES[sourceIndex++ % SOURCES.length];
 
@@ -153,7 +161,12 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
       const usesFamilyVpa = spec.name === "Arjun Mehta" || spec.name === "Lakshmi Iyer";
       let onlinePayments = 0;
 
-      spec.entries.forEach((e, index) => {
+      spec.entries.forEach((entry, index) => {
+        const e = {
+          ...entry,
+          createdAgo: cap(entry.createdAgo, entry.recent),
+          parts: entry.parts?.map((p) => ({ ...p, ago: cap(p.ago, entry.recent) })),
+        };
         const created = addDays(today, -e.createdAgo);
         const due = addDays(created, e.term);
         entries.push({

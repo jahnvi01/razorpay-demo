@@ -151,7 +151,7 @@ export default async function LandingPage() {
         <section id="stories" className="relative scroll-mt-16 overflow-hidden bg-[#060D1F] py-16 md:py-28">
           <div className="pointer-events-none absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
           <div className="relative mx-auto max-w-6xl px-4">
-            <SectionTitle dark eyebrow={t("lp.st.eyebrow")} title={t("lp.st.title")} sub={t("lp.st.note")} />
+            <SectionTitle dark eyebrow={t("lp.st.eyebrow")} title={t("lp.st.title")} />
             <Reveal className="mt-10">
               <StoriesCarousel />
             </Reveal>

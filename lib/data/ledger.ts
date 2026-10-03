@@ -1,5 +1,6 @@
 import "server-only";
-import { addDays, todayIST, type IsoDate } from "@/lib/dates";
+import { todayIST, type IsoDate } from "@/lib/dates";
+import { parsePeriod, periodBounds, type Period } from "@/lib/period";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /** Postgres error codes the UI turns into friendly messages. */
@@ -80,14 +81,13 @@ export type HomeSummary = {
   overdueCustomers: number;
 };
 
-/** This calendar month in IST. */
-export async function getHomeSummary(sandboxId: string, today: IsoDate = todayIST()): Promise<HomeSummary> {
-  const monthStart = `${today.slice(0, 7)}-01`;
-  const nextMonth = `${addDays(monthStart, 32).slice(0, 7)}-01`;
+/** UD-11 and UD-46 Given and collected in the chosen period (IST days). Remaining is always all time. */
+export async function getHomeSummary(sandboxId: string, period: Period = parsePeriod({})): Promise<HomeSummary> {
+  const bounds = periodBounds(period);
   const rows = await rpc<Record<string, number>[]>("home_summary", {
     p_sandbox_id: sandboxId,
-    p_from: `${monthStart}T00:00:00+05:30`,
-    p_to: `${nextMonth}T00:00:00+05:30`,
+    p_from: bounds.from,
+    p_to: bounds.to,
   });
   const r = rows[0];
   return {

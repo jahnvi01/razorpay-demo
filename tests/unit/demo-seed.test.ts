@@ -98,7 +98,18 @@ describe("demo seed", () => {
     expect(open.some((e) => e.due_date < TODAY)).toBe(true); // overdue
     expect(open.some((e) => e.due_date >= TODAY)).toBe(true); // not yet due
     const farhan = replayOldestFirst(byName("Farhan Qureshi")).remaining;
-    expect(farhan.filter((r) => r > 0)).toEqual([110000, 75000]); // one part-paid, one untouched
+    expect(farhan.filter((r) => r > 0)).toEqual([34000, 75000, 103500]); // one part-paid, two untouched
+  });
+
+  it("puts about ₹8,000 given and ₹2,000 collected in the current month, even on the 1st (UD-46)", () => {
+    for (const day of [TODAY, "2026-10-01", "2026-10-03", "2026-10-28"]) {
+      const s = buildDemoSeed(day);
+      const month = day.slice(0, 7);
+      const given = s.customers.flatMap((c) => c.entries).filter((e) => dateInIST(e.created_at).startsWith(month));
+      const collected = s.customers.flatMap((c) => c.payments).filter((p) => dateInIST(p.received_at).startsWith(month));
+      expect(given.reduce((n, e) => n + e.amount_paise, 0), day).toBeGreaterThanOrEqual(800000);
+      expect(collected.reduce((n, p) => n + p.amount_paise, 0), day).toBeGreaterThanOrEqual(200000);
+    }
   });
 
   it("is deterministic for a given day and moves with the calendar", () => {

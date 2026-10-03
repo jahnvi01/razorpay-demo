@@ -16,7 +16,7 @@ const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  $
 await page.goto(base + "/app/customers", { waitUntil: "networkidle0" });
 const customerPath = await page.$eval("main ul li a", (a) => a.getAttribute("href"));
 
-for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], [customerPath, "Customers"], ["/app/overdue", "Overdue"]]) {
+for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], [customerPath, "Customers"], ["/app/dues", "Dues"]]) {
   await page.goto(base + path, { waitUntil: "networkidle0" });
   const m = await page.evaluate(() => ({
     sw: document.documentElement.scrollWidth,
@@ -29,15 +29,15 @@ for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], 
   check(`${path} no horizontal scroll`, m.sw <= m.cw, `${m.sw}/${m.cw}`);
   check(`${path} header shows Razorpay logo and Ramesh Kirana`, m.header);
   check(`${path} heading uses TASA Orbiter`, /TASA/i.test(m.headingFont), m.headingFont);
-  check(`${path} nav has Home, Customers, Overdue`, m.tabs.join() === "Home,Customers,Overdue");
+  check(`${path} nav has Home, Customers, Dues`, m.tabs.join() === "Home,Customers,Dues");
   check(`${path} active tab is ${label}`, m.active === label, m.active);
 }
 
 // nav click works client-side
 await page.goto(base + "/app", { waitUntil: "networkidle0" });
-await page.click('nav a[href="/app/overdue"]');
-await page.waitForFunction(() => location.pathname === "/app/overdue");
-check("tap Overdue tab navigates", true);
+await page.click('nav a[href="/app/dues"]');
+await page.waitForFunction(() => location.pathname === "/app/dues");
+check("tap Dues tab navigates", true);
 
 // menu opens from the RK avatar, and there is no separate menu button
 const menuButtons = await page.$$eval("header button[aria-haspopup]", (bs) => bs.map((b) => b.textContent.trim()));

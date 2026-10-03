@@ -56,6 +56,9 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-42 | Welcome sheet on first demo visit | 6 | Should | S | Done |
 | UD-43 | Hide Shop QR for now | 3 | Should | S | Done |
 | UD-44 | Header menu opens from the RK avatar | 0 | Could | S | Done |
+| UD-45 | Landing trims and phone hero fix | 6 | Should | S | Done |
+| UD-46 | Home period picker and fuller this month demo data | 1 | Should | M | Done |
+| UD-47 | Dues page replaces Overdue | 4 | Should | M | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -221,6 +224,56 @@ No tickets yet.
 
 ## Done
 
+### UD-47 · Dues page replaces Overdue
+- Phase: 4
+- Priority: Should
+- Size: M
+- Status: Done
+- Dependencies: UD-24, UD-11
+- User story: As a merchant, when I tap Remaining, I want to see everyone who still owes me, sort them, and narrow to the overdue ones in one tap.
+
+**Acceptance criteria**
+- Bottom tab and page are called Dues (Hindi बकाया) and list every customer with udhaar still to pay
+- Top strip shows the total to collect and a tappable overdue chip that turns the Overdue filter on and off
+- Filter All or Overdue. Sort by Amount (default) or Recent (newest udhaar first)
+- Each row shows amount due, a late or due date badge, and the Remind button
+- Home Remaining card opens Dues. Old /app/overdue links open Dues with the Overdue filter on
+- Filter and sort live in the URL. English and Hindi, works at 360 px
+- Notes: new /app/dues page and lib/data/dues.ts. Strip reads ₹9,835 to collect from 5 customers with a 2 overdue · ₹2,090 chip that toggles ?filter=overdue. Sort Amount or Recent (newest open udhaar first, ties by amount). Rows show total due, a days late or Due date badge, the overdue part when partial, and Remind. /app/overdue redirects to Dues with the filter on. Bottom tab, home Remaining card and landing Dues list tool point here. Hindi uses देर से for overdue so it does not clash with बकाया. 43 app checks and 15 Dues checks pass on production
+
+### UD-46 · Home period picker and fuller this month demo data
+- Phase: 1
+- Priority: Should
+- Size: M
+- Status: Done
+- Dependencies: UD-11, UD-41
+- User story: As a merchant, I want to see udhaar given and collected for this month, last month or any dates I pick.
+
+**Acceptance criteria**
+- This month on home is a button that opens This month, Last month and Custom range. This month is the default
+- Custom range takes from and to dates, blocks a backwards range and caps the end at today
+- The choice stays in the URL, survives a refresh, and This month goes back to the plain home URL
+- Demo shows realistic, uneven amounts, about ₹8,000 given and ₹2,000 collected this month, with higher remaining and overdue customers
+- Remaining stays all time. English and Hindi, works at 360 px
+
+- Notes: lib/period.ts parses ?period=last and ?from=&to= and falls back to this month. getHomeSummary takes the period. Seed entries marked recent always land in the current month, even on the 1st. On production after Reset demo: this month ₹8,265 given, ₹2,030 collected, ₹9,835 remaining from 5 customers with 2 overdue. Last month ₹10,880 and ₹8,940. 42 unit and database tests, 43 app checks and 9 period checks pass
+
+### UD-45 · Landing trims and phone hero fix
+- Phase: 6
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-39
+- User story: As a visitor on a phone, I want a clean hero and a short market section, so the page reads quickly.
+
+**Acceptance criteria**
+- Market shows only 1.3 crore kiranas, 80%+ cash-heavy and ₹30 lakh crore credit gap
+- Flow step 3 reads Customers pay from the link
+- No disclaimer line under merchant stories
+- On phones the hero cards never cover the phone screen
+
+- Notes: removed the 95%, 88% and UPI cards and the three Target cards, with their strings. Market subtitle now says most of it is still tracked on paper. On phones the WhatsApp and payment cards sit in a row under the phone, over its empty bottom edge. Desktop collage unchanged. 27 landing checks pass on production
+
 ### UD-44 · Header menu opens from the RK avatar
 - Phase: 0
 - Priority: Could
@@ -263,10 +316,9 @@ No tickets yet.
 - First visit to the app opens a bottom sheet: you are Ramesh, owner of Ramesh Kirana
 - It says how many regular customers buy on udhaar, what they owe and how many are late, from live data
 - Mini cards for the customers, with one line about each demo customer
-- Says it is test mode, no real money moves, and other visitors share the shop
 - Shows once per browser. Demo guide in the header menu opens it again
 - Closes with the button, Escape or a tap outside. English and Hindi, works at 360 px
-- Notes: bottom sheet on the home screen for a first visit. Numbers are live from the home summary, so on 1 October it read 5 customers, ₹5,790 owed, 2 late. Customer rows show amount due, an Overdue badge and one line for each seeded customer. Start exploring stays pinned while the list scrolls (See my customers removed at the user's request). Seen is kept in localStorage. Demo guide in the header menu opens /app?welcome=1. Old e2e tests now act as returning visitors and pick Reset demo by role. 15 sheet checks pass on production, 42 app checks pass
+- Notes: bottom sheet on the home screen for a first visit. Numbers are live from the home summary, so on 1 October it read 5 customers, ₹5,790 owed, 2 late. Customer rows show amount due, an Overdue badge and one line for each seeded customer. Start exploring stays pinned while the list scrolls (See my customers removed at the user's request). Test mode note removed at the user's request. Seen is kept in localStorage. Demo guide in the header menu opens /app?welcome=1. Old e2e tests now act as returning visitors and pick Reset demo by role. 15 sheet checks pass on production, 42 app checks pass
 
 ### UD-41 · Demo seed shows activity in the current month
 - Phase: 1

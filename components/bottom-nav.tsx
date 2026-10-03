@@ -9,7 +9,7 @@ import { ClockIcon, HomeIcon, UsersIcon } from "./icons";
 const tabs: { href: string; label: MessageKey; Icon: typeof HomeIcon; isActive: (p: string) => boolean }[] = [
   { href: "/app", label: "nav.home", Icon: HomeIcon, isActive: (p: string) => p === "/app" },
   { href: "/app/customers", label: "nav.customers", Icon: UsersIcon, isActive: (p: string) => p.startsWith("/app/customers") },
-  { href: "/app/overdue", label: "nav.overdue", Icon: ClockIcon, isActive: (p: string) => p.startsWith("/app/overdue") },
+  { href: "/app/dues", label: "nav.dues", Icon: ClockIcon, isActive: (p: string) => p.startsWith("/app/dues") },
 ];
 
 export function BottomNav() {

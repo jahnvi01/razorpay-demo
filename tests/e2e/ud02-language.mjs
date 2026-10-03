@@ -9,7 +9,7 @@ const browser = await puppeteer.launch({
 const results = [];
 const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? "  (" + extra + ")" : ""}`);
 
-const ENGLISH_ONLY = ["Overview", "This month", "Udhaar given", "Collected", "Remaining", "Home", "Customers", "Overdue", "Live totals"];
+const ENGLISH_ONLY = ["Overview", "This month", "Udhaar given", "Collected", "Remaining", "Home", "Customers", "Dues", "Live totals"];
 
 const newPage = async () => {
   const page = await browser.newPage();
@@ -42,10 +42,10 @@ let page = await newPage();
 // A real customer from this browser's own sandbox
 await page.goto(base + "/app/customers", { waitUntil: "networkidle0" });
 const customerPath = await page.$eval("main ul li a", (a) => a.getAttribute("href"));
-const routes = ["/app", "/app/customers", customerPath, "/app/overdue"];
+const routes = ["/app", "/app/customers", customerPath, "/app/dues"];
 await page.goto(base + "/app", { waitUntil: "networkidle0" });
 let s = await state(page);
-check("first visit opens in English", s.lang === "en" && s.nav === "Home,Customers,Overdue" && s.checked === "en", s.nav);
+check("first visit opens in English", s.lang === "en" && s.nav === "Home,Customers,Dues" && s.checked === "en", s.nav);
 check("toggle visible in header", s.toggle);
 
 // Switch to Hindi in one tap, no reload
@@ -92,7 +92,7 @@ check("Hindi persists after close and reopen", s.lang === "hi" && s.heading === 
 await page.click('header [role="radio"][lang="en"]');
 await page.waitForFunction(() => document.querySelector("main h2")?.textContent.trim() === "Overview");
 s = await state(page);
-check("switch back to English", s.lang === "en" && s.nav === "Home,Customers,Overdue");
+check("switch back to English", s.lang === "en" && s.nav === "Home,Customers,Dues");
 await page.screenshot({ path: process.env.SHOT_DIR ? process.env.SHOT_DIR + "/ud02-en.png" : "/dev/null" }).catch(() => {});
 
 await browser.close();

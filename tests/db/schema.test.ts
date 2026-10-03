@@ -53,15 +53,18 @@ describe.skipIf(!hasDb)("database", () => {
          order by c.name, e.created_at`;
       const open = rows.map((r) => [r.name, Number(r.remaining_paise)]);
       expect(open).toEqual([
-        ["Arjun Mehta", 130000],
-        ["Farhan Qureshi", 110000],
+        ["Arjun Mehta", 131000],
+        ["Farhan Qureshi", 34000],
         ["Farhan Qureshi", 75000],
+        ["Farhan Qureshi", 103500],
         ["Gurpreet Singh", 100000],
-        ["Lakshmi Iyer", 54000],
-        ["Sunita Sharma", 110000],
+        ["Gurpreet Singh", 214000],
+        ["Lakshmi Iyer", 57500],
+        ["Sunita Sharma", 148500],
+        ["Sunita Sharma", 120000],
       ]);
       const paid = await db`select count(*)::int as n from public.credit_entries where sandbox_id = ${id} and status = 'paid' and paid_at is not null and remaining_paise = 0`;
-      expect(paid[0].n).toBe(seedEntries - 6);
+      expect(paid[0].n).toBe(seedEntries - 9);
     });
 
     it("is idempotent: a second call only touches last_seen_at", async () => {

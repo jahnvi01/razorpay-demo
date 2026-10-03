@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "./i18n-provider";
-import { InfoIcon, StorefrontIcon } from "./icons";
+import { StorefrontIcon } from "./icons";
 import { Amount, Badge } from "./ui";
 import { formatRupees } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n/dictionaries";
@@ -26,7 +26,7 @@ export type WelcomeCustomer = {
 
 /**
  * UD-42 First visit to the demo: who you are playing, which customers are already set up and what
- * they owe (live, since the demo is shared), and that it is test mode. Shown once per browser, and
+ * they owe (live, since the demo is shared). Shown once per browser, and
  * again from Demo guide in the header menu (which links to /app?welcome=1).
  */
 export function WelcomeSheet({
@@ -153,11 +153,6 @@ export function WelcomeSheet({
               </li>
             ))}
           </ul>
-
-          <p className="mt-4 flex items-start gap-2 rounded-md bg-notice-subtle px-3 py-2.5 text-xs leading-5 text-ink-subtle">
-            <InfoIcon size={16} className="mt-px shrink-0 text-notice" />
-            {t("welcome.test")}
-          </p>
         </div>
 
         {/* The action stays in view while the content scrolls */}
