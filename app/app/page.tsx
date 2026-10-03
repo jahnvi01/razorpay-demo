@@ -3,17 +3,32 @@ import { ButtonLink } from "@/components/form";
 import { ChevronRightIcon, PlusIcon } from "@/components/icons";
 import { countPendingQr } from "@/lib/payments/qr";
 import { Amount, Card, SectionHeader } from "@/components/ui";
+import { WelcomeSheet } from "@/components/welcome-sheet";
+import { SHOP_QR_ENABLED } from "@/lib/features";
+import { listCustomers } from "@/lib/data/customers";
 import { getHomeSummary } from "@/lib/data/ledger";
 import { getT } from "@/lib/i18n/server";
 import { requireSandbox } from "@/lib/sandbox/server";
 
-/** UD-11 Home summary for this month (IST). */
-export default async function HomePage() {
+/** UD-11 Home summary for this month (IST). UD-42 The welcome sheet opens here on a first visit. */
+export default async function HomePage({ searchParams }: PageProps<"/app">) {
   const sandboxId = await requireSandbox();
-  const [t, summary, pendingQr] = await Promise.all([getT(), getHomeSummary(sandboxId), countPendingQr(sandboxId)]);
+  const [t, summary, pendingQr, customers, query] = await Promise.all([
+    getT(),
+    getHomeSummary(sandboxId),
+    SHOP_QR_ENABLED ? countPendingQr(sandboxId) : 0,
+    listCustomers(sandboxId),
+    searchParams,
+  ]);
 
   return (
     <div className="space-y-4">
+      <WelcomeSheet
+        customers={customers.map(({ name, duePaise, overdue }) => ({ name, duePaise, overdue }))}
+        owedPaise={summary.remainingPaise}
+        lateCount={summary.overdueCustomers}
+        forceOpen={query.welcome === "1"}
+      />
       {pendingQr > 0 && (
         <Link
           href="/app/qr"
@@ -63,9 +78,11 @@ export default async function HomePage() {
         <PlusIcon size={18} />
         {t("udhaar.new")}
       </ButtonLink>
-      <ButtonLink href="/app/qr" variant="secondary">
-        {t("qr.open")}
-      </ButtonLink>
+      {SHOP_QR_ENABLED && (
+        <ButtonLink href="/app/qr" variant="secondary">
+          {t("qr.open")}
+        </ButtonLink>
+      )}
     </div>
   );
 }

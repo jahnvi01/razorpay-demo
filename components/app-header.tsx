@@ -3,15 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { resetDemo } from "@/app/app/actions";
 import { useI18n } from "./i18n-provider";
-import { MoreVerticalIcon, RefreshIcon } from "./icons";
+import Link from "next/link";
+import { InfoIcon, RefreshIcon } from "./icons";
 import { LanguageToggle } from "./language-toggle";
 import { RazorpayLogo } from "./razorpay-logo";
 
 export const MERCHANT_NAME = "Ramesh Kirana";
 const MERCHANT_INITIALS = "RK";
-
-const topbarButton =
-  "flex h-10 w-10 items-center justify-center rounded-[10px] border border-topbar-border bg-topbar-button text-white transition-colors duration-200 ease-standard hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export function AppHeader() {
   const { t } = useI18n();
@@ -38,23 +36,20 @@ export function AppHeader() {
 
         <div ref={menuRef} className="relative flex items-center gap-2">
           <LanguageToggle />
+          {/* The merchant avatar opens the menu (Demo guide, Reset demo) */}
           <button
             type="button"
-            aria-label={t("header.menu")}
+            aria-label={`${MERCHANT_NAME}: ${t("header.menu")}`}
+            title={MERCHANT_NAME}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
-            className={topbarButton}
-          >
-            <MoreVerticalIcon size={18} />
-          </button>
-          <span
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[hsl(0_0%_90%)] text-sm font-bold text-ink"
-            aria-label={MERCHANT_NAME}
-            title={MERCHANT_NAME}
+            className={`flex h-10 w-10 items-center justify-center rounded-[10px] bg-[hsl(0_0%_90%)] text-sm font-bold text-ink transition-colors duration-200 ease-standard hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-on-dark ${
+              menuOpen ? "ring-2 ring-primary-on-dark" : ""
+            }`}
           >
             {MERCHANT_INITIALS}
-          </span>
+          </button>
 
           {menuOpen && (
             <div
@@ -65,6 +60,18 @@ export function AppHeader() {
                 <p className="text-sm font-semibold text-ink">{MERCHANT_NAME}</p>
                 <p className="text-xs text-ink-muted">{t("header.merchantRole")}</p>
               </div>
+              <Link
+                href="/app?welcome=1"
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-ink transition-colors duration-200 ease-standard hover:bg-gray-faded"
+              >
+                <InfoIcon size={18} />
+                <span className="flex flex-col">
+                  <span className="font-medium">{t("welcome.guide")}</span>
+                  <span className="text-xs text-ink-muted">{t("welcome.guideHint")}</span>
+                </span>
+              </Link>
               <button
                 type="button"
                 role="menuitem"

@@ -23,6 +23,7 @@ import {
   type MessageKey,
   type Translate,
 } from "@/lib/i18n/dictionaries";
+import { SHOP_QR_ENABLED } from "@/lib/features";
 import { buildReminderMessage } from "@/lib/messages";
 
 type Tool = {
@@ -68,6 +69,11 @@ const TOOLS: Tool[] = [
     Demo: LangDemo,
   },
 ];
+
+// Shop QR is hidden for now (see lib/features.ts).
+const VISIBLE_TOOLS = TOOLS.filter(
+  (tool) => SHOP_QR_ENABLED || tool.tab !== "qr.title",
+);
 
 const STICK_REM = 8.5; // header (4rem) + tab bar, plus a little air
 const STACK_PX = 14; // each stacked card peeks out this much below the one before
@@ -134,7 +140,7 @@ export function ToolsTabs() {
         className="sticky top-16 z-20 -mx-4 border-b border-line bg-page/95 px-4 backdrop-blur"
       >
         <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:justify-center md:gap-6 [&::-webkit-scrollbar]:hidden">
-          {TOOLS.map((tool, i) => (
+          {VISIBLE_TOOLS.map((tool, i) => (
             <button
               key={tool.tab}
               type="button"
@@ -155,7 +161,7 @@ export function ToolsTabs() {
 
       {/* Anchors and cards are siblings in one container, so each sticky card can pin until the end */}
       <div className="mt-6 md:mt-10">
-        {TOOLS.map(({ tab, eyebrow, body, ticks, href, Demo }, i) => [
+        {VISIBLE_TOOLS.map(({ tab, eyebrow, body, ticks, href, Demo }, i) => [
           <div
             key={`${tab}-anchor`}
             ref={(el) => {
@@ -168,7 +174,7 @@ export function ToolsTabs() {
             ref={(el) => {
               cards.current[i] = el;
             }}
-            className={`md:sticky md:top-(--stick) ${i < TOOLS.length - 1 ? "mb-6 md:mb-24" : ""}`}
+            className={`md:sticky md:top-(--stick) ${i < VISIBLE_TOOLS.length - 1 ? "mb-6 md:mb-24" : ""}`}
             style={
               {
                 "--stick": `calc(${STICK_REM}rem + ${i * STACK_PX}px)`,

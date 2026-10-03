@@ -53,6 +53,9 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-39 | Landing story: problem, market numbers, merchant stories, scroll transitions | 6 | Should | M | Done |
 | UD-40 | Bug: Send SMS tap does not reach the customer | 2 | Must | S | Test |
 | UD-41 | Demo seed shows activity in the current month | 1 | Should | S | Done |
+| UD-42 | Welcome sheet on first demo visit | 6 | Should | S | Done |
+| UD-43 | Hide Shop QR for now | 3 | Should | S | Done |
+| UD-44 | Header menu opens from the RK avatar | 0 | Could | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -217,6 +220,53 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-44 · Header menu opens from the RK avatar
+- Phase: 0
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-01
+- User story: As a merchant, I want a cleaner header, with my avatar opening the menu.
+
+**Acceptance criteria**
+- No three dot button in the header
+- Tapping RK opens the menu with Demo guide and Reset demo, and an outside tap closes it
+
+- Notes: RK is now the menu button, labelled Ramesh Kirana: Menu for screen readers, with a ring while open. Shell test checks there is exactly one menu button and it is RK. 43 app checks pass
+
+### UD-43 · Hide Shop QR for now
+- Phase: 3
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-18, UD-19
+- User story: As a merchant, I want a simpler app. If someone pays on my counter QR, I record it myself as cash.
+
+**Acceptance criteria**
+- No Shop QR button or QR review banner on home, and /app/qr shows not found
+- Landing page has no Shop QR tool tab, flow step 3 says they pay from the link, and no merchant story is about the QR
+- Demo payment history shows only cash and pay link payments
+- One flag brings it all back
+
+- Notes: SHOP_QR_ENABLED in lib/features.ts is false. QR code, webhook handling, ledger check and QR code paths stay in the code. Seed payment sources are cash and link while the flag is off. Journey step 6 (QR payment) runs only with SHOP_QR=1. Shared demo reset on production, payments now 18 cash and 17 link. 41 unit and database tests, 42 app checks, 25 landing checks and the EN journey pass
+
+### UD-42 · Welcome sheet on first demo visit
+- Phase: 6
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-28, UD-34
+- User story: As a first time visitor, I want to know who I am playing and what is already set up, so I know what to expect inside the demo.
+
+**Acceptance criteria**
+- First visit to the app opens a bottom sheet: you are Ramesh, owner of Ramesh Kirana
+- It says how many regular customers buy on udhaar, what they owe and how many are late, from live data
+- Mini cards for the customers, with one line about each demo customer
+- Says it is test mode, no real money moves, and other visitors share the shop
+- Shows once per browser. Demo guide in the header menu opens it again
+- Closes with the button, Escape or a tap outside. English and Hindi, works at 360 px
+- Notes: bottom sheet on the home screen for a first visit. Numbers are live from the home summary, so on 1 October it read 5 customers, ₹5,790 owed, 2 late. Customer rows show amount due, an Overdue badge and one line for each seeded customer. Start exploring stays pinned while the list scrolls (See my customers removed at the user's request). Seen is kept in localStorage. Demo guide in the header menu opens /app?welcome=1. Old e2e tests now act as returning visitors and pick Reset demo by role. 15 sheet checks pass on production, 42 app checks pass
 
 ### UD-41 · Demo seed shows activity in the current month
 - Phase: 1

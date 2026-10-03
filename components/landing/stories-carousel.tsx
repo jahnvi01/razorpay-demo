@@ -8,7 +8,7 @@ import type { MessageKey } from "@/lib/i18n/dictionaries";
 type Story = { name: string; initials: string; color: string; quote: MessageKey; shop: MessageKey; tool: MessageKey };
 
 const STORIES: Story[] = [
-  { name: "Mukesh Goyal", initials: "MG", color: "bg-[#2563eb]", quote: "lp.st.q1", shop: "lp.st.s1", tool: "qr.title" },
+  { name: "Mukesh Goyal", initials: "MG", color: "bg-[#2563eb]", quote: "lp.st.q1", shop: "lp.st.s1", tool: "lp.st.k1" },
   { name: "Sukhwinder Singh", initials: "SS", color: "bg-[#5b4ee6]", quote: "lp.st.q2", shop: "lp.st.s2", tool: "trust.title" },
   { name: "Aparna Nair", initials: "AN", color: "bg-[#2f8f5b]", quote: "lp.st.q3", shop: "lp.st.s3", tool: "lp.st.k3" },
   { name: "Fatima Shaikh", initials: "FS", color: "bg-[#c2410c]", quote: "lp.st.q4", shop: "lp.st.s4", tool: "lp.st.k4" },

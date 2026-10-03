@@ -15,6 +15,7 @@
 // Gurpreet pay part of theirs), so the home screen's "This month" is never empty, even on the 1st.
 
 import { addDays, atIST, todayIST, type IsoDate } from "../dates.ts";
+import { SHOP_QR_ENABLED } from "../features.ts";
 
 export type PaymentSource = "cash" | "link" | "qr";
 
@@ -56,7 +57,8 @@ type CustomerSpec = { name: string; phone: string; language: "en" | "hi"; vpa: s
 /** Arjun and Lakshmi each paid once from this shared family UPI, to show an ambiguous QR match. */
 export const SHARED_FAMILY_VPA = "iyer.mehta.family@okaxis";
 
-const SOURCES: PaymentSource[] = ["cash", "link", "qr"];
+// With Shop QR hidden, past payments in the demo are cash or pay link only.
+const SOURCES: PaymentSource[] = SHOP_QR_ENABLED ? ["cash", "link", "qr"] : ["cash", "link"];
 
 const DEMO_CUSTOMERS: CustomerSpec[] = [
   {

@@ -13,6 +13,7 @@ const ENGLISH_ONLY = ["Overview", "This month", "Udhaar given", "Collected", "Re
 
 const newPage = async () => {
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => localStorage.setItem("ud-welcome-seen", "1")); // returning visitor (UD-42)
   await page.setViewport({ width: 360, height: 740, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   return page;
 };

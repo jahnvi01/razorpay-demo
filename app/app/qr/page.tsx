@@ -6,6 +6,8 @@ import { Amount, Badge, Card, SectionHeader } from "@/components/ui";
 import { listCustomers } from "@/lib/data/customers";
 import { formatDate } from "@/lib/format";
 import { getLang, getT } from "@/lib/i18n/server";
+import { notFound } from "next/navigation";
+import { SHOP_QR_ENABLED } from "@/lib/features";
 import { ensureShopQr, listQrPayments } from "@/lib/payments/qr";
 import { requireSandbox } from "@/lib/sandbox/server";
 import { SHARED_FAMILY_VPA } from "@/lib/seed/demo-seed";
@@ -13,6 +15,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /** UD-19 Shop QR: the QR itself, payments to review, and a demo simulator. */
 export default async function ShopQrPage() {
+  if (!SHOP_QR_ENABLED) notFound();
   const [t, lang, sandboxId] = await Promise.all([getT(), getLang(), requireSandbox()]);
   const [qr, { pending, recent }, customers, vpaRows] = await Promise.all([
     ensureShopQr(sandboxId),

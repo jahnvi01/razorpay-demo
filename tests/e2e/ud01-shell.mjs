@@ -6,6 +6,8 @@ const browser = await puppeteer.launch({
   headless: "new",
 });
 const page = await browser.newPage();
+// These tests cover other screens, so act as a returning visitor who has seen the welcome sheet (UD-42).
+await page.evaluateOnNewDocument(() => localStorage.setItem("ud-welcome-seen", "1"));
 await page.setViewport({ width: 360, height: 740, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const results = [];
 const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? "  (" + extra + ")" : ""}`);
@@ -19,7 +21,7 @@ for (const [path, label] of [["/app", "Home"], ["/app/customers", "Customers"], 
   const m = await page.evaluate(() => ({
     sw: document.documentElement.scrollWidth,
     cw: document.documentElement.clientWidth,
-    header: !!document.querySelector('header [aria-label="Ramesh Kirana"]') && !!document.querySelector('header [aria-label="Razorpay"]'),
+    header: !!document.querySelector('header [title="Ramesh Kirana"]') && !!document.querySelector('header [aria-label="Razorpay"]'),
     headingFont: getComputedStyle(document.querySelector("main h2")).fontFamily,
     tabs: [...document.querySelectorAll("nav a")].map((a) => a.textContent.trim()),
     active: document.querySelector('nav a[aria-current="page"]')?.textContent.trim(),
@@ -37,9 +39,11 @@ await page.click('nav a[href="/app/overdue"]');
 await page.waitForFunction(() => location.pathname === "/app/overdue");
 check("tap Overdue tab navigates", true);
 
-// menu with Reset demo
-await page.click('button[aria-label="Menu"]');
-const item = await page.$eval('[role="menuitem"]', (b) => ({ text: b.textContent, disabled: b.disabled }));
+// menu opens from the RK avatar, and there is no separate menu button
+const menuButtons = await page.$$eval("header button[aria-haspopup]", (bs) => bs.map((b) => b.textContent.trim()));
+check("header has one menu button, the RK avatar", menuButtons.join() === "RK", menuButtons.join());
+await page.click("header button[aria-haspopup]");
+const item = await page.$eval('button[role="menuitem"]', (b) => ({ text: b.textContent, disabled: b.disabled }));
 check("menu shows Reset demo, ready to use", item.text.includes("Reset demo") && !item.disabled);
 
 await page.mouse.click(40, 400);

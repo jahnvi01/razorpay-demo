@@ -134,6 +134,12 @@ body {
 .lp-reveal-group.lp-reveal-scale:not(.is-visible) > * { transform: scale(0.9); }
 
 
+/* UD-42 Bottom sheet */
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+.sheet-up { animation: sheet-up 380ms var(--ease-entrance) both; }
+.sheet-fade { animation: sheet-fade 300ms var(--ease-standard) both; }
+
 /* UD-38 Looping tool demos. One 6 s timeline: things appear (in1), a cursor taps at about 34%,
    the tapped thing swaps (out2 to in2), a result appears (in3), then it all resets. With reduced
    motion the loops stop on their final state. */
@@ -165,6 +171,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lp-in1, .lp-in2, .lp-in3, .lp-grow1, .lp-grow2 { animation: none !important; }
   .lp-out2, .lp-cursor, .lp-ripple { display: none; }
+  .sheet-up, .sheet-fade { animation: none !important; }
   .lp-fade-up, .lp-rise, .lp-pop, .lp-fill, .lp-float, .lp-tap, .lp-marquee { animation: none !important; }
   .lp-reveal, .lp-reveal-group > * { opacity: 1 !important; transform: none !important; filter: none !important; transition: none; }
 }
