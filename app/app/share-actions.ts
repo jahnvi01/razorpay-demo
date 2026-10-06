@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { appUrl } from "@/lib/app-url";
 import { getCustomerLedger } from "@/lib/data/ledger";
 import { todayIST } from "@/lib/dates";
@@ -72,10 +73,46 @@ export async function resendSmsAction(customerId: string): Promise<ShareResult> 
   if (!UUID.test(customerId)) return { ok: false };
   try {
     const sandboxId = await requireSandbox();
+    if ((await cookies()).get("ud-sms-off")?.value === "1") return { ok: true }; // test runs never text
     const state = await syncPayLink(sandboxId, customerId, { sms: "manual", baseUrl: await appUrl() });
     return { ok: state.smsSent };
   } catch (err) {
     console.error("sms resend failed", err);
     return { ok: false };
   }
+}
+
+const BULK_MAX = 50;
+const BULK_CONCURRENCY = 3;
+
+/**
+ * UD-49 One tap reminders: the pay link SMS for each chosen customer, a few at a time so Razorpay is
+ * not hit all at once. Each result stands alone, so one failure never stops the rest. Test runs set
+ * the ud-sms-off cookie and get every customer reported as skipped instead of texted.
+ */
+export async function bulkSmsAction(customerIds: string[]): Promise<{ id: string; ok: boolean }[]> {
+  const ids = [...new Set(customerIds)].filter((id) => UUID.test(id)).slice(0, BULK_MAX);
+  if (ids.length === 0) return [];
+  const sandboxId = await requireSandbox();
+  if ((await cookies()).get("ud-sms-off")?.value === "1") return ids.map((id) => ({ id, ok: true }));
+  const baseUrl = await appUrl();
+
+  const results: { id: string; ok: boolean }[] = [];
+  for (let i = 0; i < ids.length; i += BULK_CONCURRENCY) {
+    const batch = ids.slice(i, i + BULK_CONCURRENCY);
+    results.push(
+      ...(await Promise.all(
+        batch.map(async (id) => {
+          try {
+            const state = await syncPayLink(sandboxId, id, { sms: "manual", baseUrl });
+            return { id, ok: state.smsSent };
+          } catch (err) {
+            console.error("bulk sms failed", id, err);
+            return { id, ok: false };
+          }
+        }),
+      )),
+    );
+  }
+  return results;
 }

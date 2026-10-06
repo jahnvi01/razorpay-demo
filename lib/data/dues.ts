@@ -18,7 +18,12 @@ export type DueCustomer = {
   nextDueDate: string | null;
   /** When the newest open udhaar was given, for the Recent sort. */
   lastUdhaarAt: string;
+  /** UD-50 The last reminder sent (manual SMS, One tap reminders, day-before SMS or WhatsApp Remind). */
+  lastReminder: { at: string; channel: "sms" | "whatsapp" } | null;
 };
+
+/** Reminder kinds. "update" (the SMS or WhatsApp that goes with a new udhaar or payment) is not a reminder. */
+const REMINDER_KINDS = new Set(["manual", "day_before"]);
 
 /**
  * UD-47 Everyone who still owes udhaar (replaces the overdue-only list from UD-24).
@@ -28,7 +33,7 @@ export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdu
   const today = todayIST();
   const { data, error } = await supabaseAdmin()
     .from("customers")
-    .select("id, name, phone, credit_entries(remaining_paise, due_date, status, created_at)")
+    .select("id, name, phone, credit_entries(remaining_paise, due_date, status, created_at), reminders(sent_at, channel, kind)")
     .eq("sandbox_id", sandboxId);
   if (error) throw new Error(`dues: ${error.message}`);
 
@@ -37,6 +42,7 @@ export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdu
     name: string;
     phone: string;
     credit_entries: { remaining_paise: number; due_date: string; status: string; created_at: string }[];
+    reminders: { sent_at: string; channel: "sms" | "whatsapp"; kind: string }[];
   }[];
 
   const list = rows
@@ -46,6 +52,7 @@ export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdu
       const late = open.filter((e) => e.due_date < today);
       const upcoming = open.filter((e) => e.due_date >= today).map((e) => e.due_date).sort();
       const oldestLate = late.map((e) => e.due_date).sort()[0];
+      const last = (c.reminders ?? []).filter((r) => REMINDER_KINDS.has(r.kind)).sort((a, b) => b.sent_at.localeCompare(a.sent_at))[0];
       return {
         id: c.id,
         name: c.name,
@@ -55,6 +62,7 @@ export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdu
         daysLate: oldestLate ? Math.round((Date.parse(today) - Date.parse(oldestLate)) / 86_400_000) : 0,
         nextDueDate: upcoming[0] ?? null,
         lastUdhaarAt: open.map((e) => e.created_at).sort().at(-1)!,
+        lastReminder: last ? { at: last.sent_at, channel: last.channel } : null,
       };
     })
     .filter((c): c is DueCustomer => c !== null && (!opts.overdueOnly || c.overduePaise > 0));

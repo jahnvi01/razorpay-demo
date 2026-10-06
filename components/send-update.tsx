@@ -76,7 +76,7 @@ export function SendUpdate({
           {smsPending ? t("share.sending") : isDemo ? t("share.smsSend") : t("share.sms")}
         </SecondaryButton>
       </div>
-      {isDemo && <p className="text-xs text-ink-muted">{t("share.demoNoAutoSms")}</p>}
+      {isDemo && <p className="text-xs text-ink-muted">{t("share.demoAutoSms")}</p>}
 
       {status === "smsSent" && <SuccessBanner message={t("share.smsSent")} />}
       <FormError

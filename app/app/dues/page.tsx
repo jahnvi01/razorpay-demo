@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { OneTapReminders } from "@/components/one-tap-reminders";
 import { RemindButton } from "@/components/remind-button";
 import { Amount, Badge, Card, SectionHeader } from "@/components/ui";
 import { listDues, type DuesSort } from "@/lib/data/dues";
-import { formatDate, formatPhone, formatRupees } from "@/lib/format";
+import { dateInIST, todayIST } from "@/lib/dates";
+import { formatDate, formatRupees } from "@/lib/format";
 import { getLang, getT } from "@/lib/i18n/server";
 import { requireSandbox } from "@/lib/sandbox/server";
 
@@ -20,6 +22,15 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
   const shown = overdueOnly ? overdue : all;
   const totalDue = all.reduce((s, c) => s + c.duePaise, 0);
   const totalOverdue = overdue.reduce((s, c) => s + c.overduePaise, 0);
+
+  // UD-50 "Reminded today (SMS)", "Reminded 3 days ago (WhatsApp)", or "Not reminded yet" when overdue
+  const today = todayIST();
+  const reminded = (c: (typeof all)[number]) => {
+    if (!c.lastReminder) return c.overduePaise > 0 ? t("dues.notReminded") : null;
+    const days = Math.round((Date.parse(today) - Date.parse(dateInIST(c.lastReminder.at))) / 86_400_000);
+    const when = days <= 0 ? t("dues.today") : days === 1 ? t("dues.yesterday") : t("dues.daysAgo", { count: days });
+    return t("dues.reminded", { when, channel: c.lastReminder.channel === "sms" ? "SMS" : "WhatsApp" });
+  };
 
   const href = (next: { sort?: DuesSort; overdueOnly?: boolean }) => {
     const p = new URLSearchParams();
@@ -45,7 +56,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-16">
       <SectionHeader title={t("dues.title")} />
       {all.length === 0 ? (
         <Card className="p-4 text-sm text-ink-subtle">{t("dues.none")}</Card>
@@ -79,6 +90,10 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
             </div>
           </div>
 
+          {overdue.length > 0 && (
+            <OneTapReminders customers={overdue.map(({ id, name, duePaise, daysLate }) => ({ id, name, duePaise, daysLate }))} />
+          )}
+
           {shown.length === 0 ? (
             <Card className="p-4 text-sm text-ink-subtle">{t("overdue.none")}</Card>
           ) : (
@@ -96,10 +111,12 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
                           <Badge tone="notice">{t("customer.dueOn", { date: formatDate(c.nextDueDate, lang) })}</Badge>
                         ) : null}
                       </span>
-                      <span className="mt-0.5 block text-xs text-ink-muted">
-                        {formatPhone(c.phone)}
-                        {c.overduePaise > 0 && c.duePaise > c.overduePaise ? ` · ${t("dues.latePart", { amount: formatRupees(c.overduePaise) })}` : ""}
-                      </span>
+                      {c.overduePaise > 0 && c.duePaise > c.overduePaise && (
+                        <span className="mt-0.5 block text-xs text-ink-muted">{t("dues.latePart", { amount: formatRupees(c.overduePaise) })}</span>
+                      )}
+                      {reminded(c) && (
+                        <span className={`mt-0.5 block text-xs ${c.lastReminder ? "text-ink-muted" : "font-medium text-notice"}`}>{reminded(c)}</span>
+                      )}
                     </Link>
                     <RemindButton customerId={c.id} />
                   </li>

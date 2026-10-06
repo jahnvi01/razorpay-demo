@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { appUrl } from "@/lib/app-url";
 import {
@@ -26,13 +27,18 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const lang = (v: FormDataEntryValue | null): "en" | "hi" => (v === "hi" ? "hi" : "en");
 const isDuplicatePhone = (err: unknown) => err instanceof LedgerError && err.code === PG_UNIQUE_VIOLATION;
 
+/** Test runs set this cookie so automated journeys never text real numbers. */
+const SMS_OFF_COOKIE = "ud-sms-off";
+
 /**
  * UD-13 and UD-15 After a balance change: refresh the pay link and let Razorpay SMS it.
+ * UD-48 A new udhaar entry texts demo customers too; other changes follow the usual rules.
  * A Razorpay failure never undoes the ledger change. It only shows a warning on the next screen.
  */
-async function afterBalanceChange(sandboxId: string, customerId: string): Promise<string> {
+async function afterBalanceChange(sandboxId: string, customerId: string, event: "udhaar" | "update" = "update"): Promise<string> {
   try {
-    const state = await syncPayLink(sandboxId, customerId, { sms: "update", baseUrl: await appUrl() });
+    const smsOff = (await cookies()).get(SMS_OFF_COOKIE)?.value === "1";
+    const state = await syncPayLink(sandboxId, customerId, { sms: smsOff ? "none" : event, baseUrl: await appUrl() });
     return state.smsSent ? "&sms=sent" : "";
   } catch (err) {
     console.error("pay link update failed", err);
@@ -97,7 +103,7 @@ export async function createEntryAction(_prev: FormState, form: FormData): Promi
     console.error(err);
     return { error: "form.saveFailed" };
   }
-  const linkStatus = await afterBalanceChange(sandboxId, result.customerId);
+  const linkStatus = await afterBalanceChange(sandboxId, result.customerId, "udhaar");
   redirect(`/app/customers/${result.customerId}?saved=udhaar&amount=${amount.value}${linkStatus}`);
 }
 

@@ -15,8 +15,8 @@ describe("i18n", () => {
   });
 
   it("fills placeholders", () => {
-    expect(translator("en")("home.fromEntries", { count: 3 })).toBe("from 3 entries");
-    expect(translator("hi")("home.fromEntries", { count: 3 })).toBe("3 एंट्री से");
+    expect(translator("en")("customer.openEntries", { count: 3 })).toBe("3 open entries");
+    expect(translator("hi")("customer.openEntries", { count: 3 })).toBe("3 खुली एंट्री");
   });
 
   it("only accepts known languages", () => {

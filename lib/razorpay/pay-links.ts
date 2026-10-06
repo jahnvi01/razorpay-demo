@@ -51,8 +51,11 @@ async function cancelQuietly(linkId: string): Promise<void> {
   }
 }
 
-/** "update" after a balance change, "manual" on a tap, "day_before" from the reminder job (UD-20). */
-export type SmsMode = "none" | "update" | "manual" | "day_before";
+/**
+ * "udhaar" after a new udhaar entry (UD-48), "update" after any other balance change, "manual" on a
+ * tap, "day_before" from the reminder job (UD-20).
+ */
+export type SmsMode = "none" | "udhaar" | "update" | "manual" | "day_before";
 
 async function logMessage(
   sandboxId: string,
@@ -71,7 +74,7 @@ async function logMessage(
  * - Nothing due: cancels any open link.
  * - Link already for the right amount: keeps it, unless an SMS is wanted (see below).
  * - Otherwise, or when sending an SMS: cancels the old link and creates a new one with the SMS on.
- * UD-15 SMS goes through Razorpay's own payment link SMS. Seed customers get SMS only on a manual tap.
+ * UD-15 SMS goes through Razorpay's own payment link SMS. Demo customers get it for new udhaar and on a tap.
  */
 export async function syncPayLink(
   sandboxId: string,
@@ -90,9 +93,10 @@ export async function syncPayLink(
     statementToken: c.statement_token,
     duePaise,
   };
-  // Demo (seed) customers never get automatic SMS. A manual Send SMS still goes out.
-  const wantSms = options.sms === "manual" || (options.sms !== "none" && !c.is_demo);
-  const smsKind = options.sms === "none" ? "update" : options.sms;
+  // Demo (seed) customers get an automatic SMS only for a new udhaar entry (UD-48) and on a manual tap.
+  // Seeded history never comes through here, so it never sends anything.
+  const wantSms = options.sms === "manual" || options.sms === "udhaar" || (options.sms !== "none" && !c.is_demo);
+  const smsKind = options.sms === "none" || options.sms === "udhaar" ? "update" : options.sms;
 
   if (duePaise === 0) {
     if (c.pay_link_id) {

@@ -6,7 +6,7 @@
 //   npm run test:journey -- --slow                        one extra run on emulated Slow 3G with a 4x slower CPU
 //   npm run test:journey -- --with-sms --sms-to 98XXXXXXXX  step 1 uses a NEW customer on that number (sends real SMS)
 //
-// Without --with-sms the journey uses a demo customer (no automatic SMS), so nobody gets a message.
+// Without --with-sms the journey uses a demo customer and sets the ud-sms-off cookie, so nobody gets a message.
 // Each run starts with Reset demo. Online payments arrive as correctly signed Razorpay webhooks.
 // Needs SUPABASE_URL, SUPABASE_SECRET_KEY, RAZORPAY_WEBHOOK_SECRET and CRON_SECRET (from .env.local).
 import { createHmac, randomBytes } from "node:crypto";
@@ -106,6 +106,8 @@ async function journey(lang, { throttled = false } = {}) {
     await page.emulateCPUThrottling(4);
   }
   await page.setCookie({ name: "lang", value: lang, url: base });
+  // Demo customers now get an SMS for new udhaar (UD-48). Without --with-sms, switch SMS off for this run.
+  if (!withSms) await page.setCookie({ name: "ud-sms-off", value: "1", url: base });
   page.setDefaultTimeout(throttled ? 120_000 : 30_000);
   const L = LABEL[lang];
   const go = async (path) => {
@@ -263,7 +265,7 @@ async function journey(lang, { throttled = false } = {}) {
       );
     } else {
       step(
-        "demo customer: pay link ready, no automatic SMS",
+        "demo customer: pay link ready, no SMS during a test run",
         !!link.pay_link_id &&
           (
             await sb(

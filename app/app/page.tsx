@@ -54,7 +54,6 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
         <div className="mt-2">
           <Amount paise={summary.givenPaise} size="xl" />
         </div>
-        <p className="mt-2 text-sm text-ink-subtle">{t("home.fromEntries", { count: summary.givenEntries })}</p>
       </Card>
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4">
@@ -72,12 +71,9 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
             <div className="mt-2">
               <Amount paise={summary.remainingPaise} size="md" />
             </div>
-            <p className="mt-1 text-xs text-ink-muted">
-              {t("home.remainingCustomers", { count: summary.customersOwing })}
-              {summary.overdueCustomers > 0 && (
-                <span className="font-semibold text-negative"> · {t("home.overdueCustomers", { count: summary.overdueCustomers })}</span>
-              )}
-            </p>
+            {summary.overdueCustomers > 0 && (
+              <p className="mt-1 text-xs font-semibold text-negative">{t("home.overdueCustomers", { count: summary.overdueCustomers })}</p>
+            )}
           </Card>
         </Link>
       </div>

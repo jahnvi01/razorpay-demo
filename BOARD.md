@@ -59,6 +59,11 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-45 | Landing trims and phone hero fix | 6 | Should | S | Done |
 | UD-46 | Home period picker and fuller this month demo data | 1 | Should | M | Done |
 | UD-47 | Dues page replaces Overdue | 4 | Should | M | Done |
+| UD-48 | Automatic SMS to demo customers for new udhaar | 2 | Should | S | Test |
+| UD-49 | One tap reminders: bulk SMS to overdue customers | 4 | Should | M | Test |
+| UD-50 | Last reminder on Dues rows | 4 | Could | S | Done |
+| UD-51 | Dues rows: no phone, WhatsApp and SMS icon buttons | 4 | Should | S | Done |
+| UD-52 | Fewer numbers on home | 1 | Could | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -156,6 +161,38 @@ No tickets yet.
 
 ## Test
 
+### UD-49 · One tap reminders: bulk SMS to overdue customers
+- Phase: 4
+- Priority: Should
+- Size: M
+- Status: Test
+- Dependencies: UD-47, UD-40
+- User story: As a merchant, I want to remind all my overdue customers by SMS in one go, instead of one by one.
+
+**Acceptance criteria**
+- Floating One tap reminders button on Dues, shown only when someone is overdue
+- Tapping opens a sheet listing overdue customers with checkboxes, all ticked, with amount and days late
+- Send SMS to N sends the Razorpay pay link SMS to each ticked customer, then shows who was sent and who failed
+- Customers already sent an SMS today are treated like everyone else
+- English and Hindi, works at 360 px, test runs send no SMS
+- Notes: bulkSmsAction in share-actions.ts sends the manual pay link SMS to up to 50 customers, 3 at a time, and returns a result per customer. components/one-tap-reminders.tsx is the floating pill and the review sheet with Select all, Send SMS to N, and a Sent to N or Couldn't send to summary. Dues gets extra bottom space so the pill never covers the last Remind. Test runs with ud-sms-off report sent without texting. 11 bulk checks pass on production with 0 SMS sent, 43 app checks pass. Waiting for the user to send one real batch and confirm the SMS arrive
+
+### UD-48 · Automatic SMS to demo customers for new udhaar
+- Phase: 2
+- Priority: Should
+- Size: S
+- Status: Test
+- Dependencies: UD-15, UD-40
+- User story: As a merchant trying the demo, when I record new udhaar for a demo customer, I want them to get the SMS just like a real customer.
+
+**Acceptance criteria**
+- New udhaar for a demo customer sends the Razorpay pay link SMS automatically
+- Seeded credit records never send an SMS, on reset or when screens open
+- Cash received, deleted payments and online payments still send no automatic SMS to demo customers
+- Automated test runs send no SMS
+
+- Notes: new SmsMode udhaar used only by Give udhaar. Test runs set the ud-sms-off cookie (the journey does this unless --with-sms). Verified: journey recorded udhaar for a demo customer with no SMS, and after Reset demo on production plus opening every customer there were 0 SMS rows. Customer screen note now says SMS goes out automatically for new udhaar. Waiting for the user to record one udhaar on a demo customer and confirm the SMS arrives
+
 ### UD-40 · Bug: Send SMS tap does not reach the customer
 - Phase: 2
 - Priority: Must
@@ -223,6 +260,51 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-52 · Fewer numbers on home
+- Phase: 1
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-11
+- User story: As a merchant, I want the home screen to show only the key numbers.
+
+**Acceptance criteria**
+- Udhaar given no longer says from N entries
+- Remaining no longer says from N customers, only N overdue in red
+
+- Notes: removed both lines and their strings. The i18n unit test now checks placeholders on customer.openEntries. 15 unit tests and 43 app checks pass, production verified in English and Hindi
+
+### UD-51 · Dues rows: no phone, WhatsApp and SMS icon buttons
+- Phase: 4
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-47
+- User story: As a merchant, I want a cleaner Dues list and the choice to remind by WhatsApp or SMS from each row.
+
+**Acceptance criteria**
+- Dues rows do not show phone numbers. The customer screen still does
+- Each row has a WhatsApp icon button and an SMS icon button, no Remind text
+- WhatsApp opens my WhatsApp with the reminder written. SMS sends the Razorpay pay link SMS and shows a tick, or a red outline if it failed
+
+- Notes: RemindButton is now two round icon buttons with screen reader labels Remind on WhatsApp and Remind by SMS (Hindi too). SMS uses resendSmsAction, which now skips sending for test runs with ud-sms-off. Fixed the SMS button staying on a spinner by refreshing outside the transition. Test WhatsApp log row removed after checking. 43 app checks pass, production verified
+
+### UD-50 · Last reminder on Dues rows
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-47, UD-49
+- User story: As a merchant, I want to see when I last reminded each customer, so I know whom to chase.
+
+**Acceptance criteria**
+- Each Dues row shows Reminded today, yesterday or N days ago, with SMS or WhatsApp
+- Overdue customers never reminded show Not reminded yet. Others show nothing extra
+- Counts Send SMS, One tap reminders, day-before SMS and WhatsApp Remind. The automatic SMS with a new udhaar does not count
+- Only on Dues rows
+
+- Notes: listDues reads reminders with kind manual or day_before. WhatsApp Remind refreshes the page data before opening WhatsApp. Verified with temporary log rows (removed after) and a WhatsApp tap: an older day-before SMS showed and a newer automatic update was ignored. Hindi reads 3 दिन पहले याद दिलाया (SMS). 43 app checks pass
 
 ### UD-47 · Dues page replaces Overdue
 - Phase: 4
