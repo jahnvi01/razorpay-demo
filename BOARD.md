@@ -69,6 +69,8 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-55 | Two line Dues rows of equal height | 4 | Could | S | Done |
 | UD-56 | Landing hero acts out the journey on a phone, OkCredit style | 6 | Should | M | Done |
 | UD-57 | Shop segments with real photos on the landing page | 6 | Should | S | Done |
+| UD-58 | Offline mode and auto sync for low network areas | V2 | Should | L | Test |
+| UD-59 | Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels | 6 | Could | S | Test |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -165,6 +167,40 @@ No tickets yet.
 No tickets yet.
 
 ## Test
+
+### UD-59 · Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels
+- Phase: 6
+- Priority: Could
+- Size: S
+- Status: Test
+- Dependencies: UD-56, UD-58
+- User story: As a visitor, I want a calmer landing page with less repetition.
+
+**Acceptance criteria**
+- Hero text and App Demo are centred on phones, left aligned on desktop
+- Tool cards show only a title, one line and the demo, no Try it button and no ticks. The offline card is called Low network support
+- Merchant story dots are centred between the arrows
+- No all caps labels: section eyebrows removed, hero line and payment strip label in normal case
+
+- Notes: built locally with UD-58, not deployed. Removed 24 unused strings. 26 landing checks pass locally. Waiting for the user's go ahead to deploy together with UD-58
+
+### UD-58 · Offline mode and auto sync for low network areas
+- Phase: V2 (first slice of UD-29)
+- Priority: Should
+- Size: L
+- Status: Test
+- Dependencies: UD-08, UD-10, UD-04
+- User story: As a merchant in a low network area, I want to keep recording udhaar and cash, and have it sync by itself when the network comes back.
+
+**Acceptance criteria**
+- Home, Customers, Dues and customer screens open offline from the last copy on the phone
+- Give udhaar and Cash received for existing customers save on the phone at once when offline or when the network fails, and show as waiting to sync
+- A strip shows Offline and how many changes are waiting, with Sync now
+- Changes sync automatically when the network is back, in order, never twice, and the pay link and SMS go out once per customer after sync
+- Adding a new customer offline says it needs network
+- Landing tools section describes working on low network
+- English and Hindi. Local only, not deployed until the user says so
+- Notes: built and tested locally, not deployed. Migration 1000 (sync_ops log and apply_sync_op, applied to Supabase because local and production share it, additive and unused by production) keeps each change at most once with the phone's own time. /api/sync takes up to 50 queued changes, rejects bad ones and changes for customers gone after a reset, then refreshes the pay link and SMS once per customer. lib/offline/outbox.ts is the IndexedDB queue. OfflineSync in the header shows the strip, syncs on reconnect, on return to the app and with backoff, and keeps the main screens cached. The service worker serves app screens from cache when the network does not answer in 4 seconds. Give udhaar and Cash received queue when offline or when the request fails. An offline udhaar shows its confirmation on the form with Open customer. 18 offline checks, 43 app checks, 42 unit and database tests and 26 landing checks pass locally. Landing tools section has a fifth card, Works on low network. Waiting for the user's go ahead to deploy
 
 ### UD-49 · One tap reminders: bulk SMS to overdue customers
 - Phase: 4

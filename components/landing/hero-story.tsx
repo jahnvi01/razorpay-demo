@@ -57,15 +57,16 @@ export function HeroStory({ cta }: { cta: ReactNode }) {
   return (
     <div className="mx-auto grid max-w-6xl gap-x-12 gap-y-8 px-4 pt-8 pb-10 md:grid-cols-[minmax(0,1fr)_auto] md:pt-16 md:pb-16">
       {/* Headline: the journey in three steps */}
-      <div className="md:col-start-1 md:row-start-1 md:self-end">
-        <p className="lp-rise text-xs font-semibold tracking-widest text-primary uppercase">
+      {/* Centred on phones, left aligned next to the phone on desktop */}
+      <div className="text-center md:col-start-1 md:row-start-1 md:self-end md:text-left">
+        <p className="lp-rise text-sm font-semibold text-primary md:text-base">
           {t("lp.hero.title1")} {t("lp.hero.title2")}
         </p>
         <h1 className="lp-rise mt-4 font-heading text-[38px] leading-[46px] font-semibold tracking-tight md:text-[60px] md:leading-[70px]" style={{ animationDelay: "120ms" }}>
           {STEPS.map(([line], i) => (
             <span
               key={line}
-              className={`block w-fit transition-colors duration-500 ease-standard ${
+              className={`mx-auto block w-fit transition-colors duration-500 ease-standard md:mx-0 ${
                 i === step ? "text-ink [background:linear-gradient(transparent_62%,#DCE8FF_62%)]" : "text-ink/20"
               }`}
             >
@@ -107,7 +108,9 @@ export function HeroStory({ cta }: { cta: ReactNode }) {
       </div>
 
       {/* Paragraph and App Demo: under the headline on desktop, at the bottom on phones */}
-      <div className="lp-rise md:col-start-1 md:row-start-2 md:self-start" style={{ animationDelay: "240ms" }}>{cta}</div>
+      <div className="lp-rise text-center md:col-start-1 md:row-start-2 md:self-start md:text-left [&>p:first-child]:mx-auto md:[&>p:first-child]:mx-0" style={{ animationDelay: "240ms" }}>
+        {cta}
+      </div>
     </div>
   );
 }

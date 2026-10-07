@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useEffect,
   useRef,
@@ -11,8 +10,8 @@ import {
 import { useI18n } from "@/components/i18n-provider";
 import { Reveal } from "./reveal";
 import {
-  ArrowRightIcon,
   CheckCircleIcon,
+  ClockIcon,
   MessageCircleIcon,
   QRCodeIcon,
 } from "@/components/icons";
@@ -28,46 +27,17 @@ import { buildReminderMessage } from "@/lib/messages";
 
 type Tool = {
   tab: MessageKey;
-  eyebrow: MessageKey;
   body: MessageKey;
-  ticks: MessageKey[];
-  href: string;
   Demo: (p: { t: Translate; lang: Lang }) => ReactNode;
 };
 
+// Each card: a title, one line, and the looping demo. The demo shows the details.
 const TOOLS: Tool[] = [
-  {
-    tab: "trust.title",
-    eyebrow: "lp.t1.e",
-    body: "lp.t1.b",
-    ticks: ["lp.t1.k1", "lp.t1.k2", "lp.t1.k3"],
-    href: "/app/customers",
-    Demo: TrustDemo,
-  },
-  {
-    tab: "lp.t2.t",
-    eyebrow: "lp.t2.e",
-    body: "lp.t2.b",
-    ticks: ["lp.t2.k1", "lp.t2.k2", "lp.t2.k3"],
-    href: "/app/dues",
-    Demo: OverdueDemo,
-  },
-  {
-    tab: "qr.title",
-    eyebrow: "lp.t3.e",
-    body: "lp.t3.b",
-    ticks: ["lp.t3.k1", "lp.t3.k2", "lp.t3.k3"],
-    href: "/app/qr",
-    Demo: QrDemo,
-  },
-  {
-    tab: "lp.t4.t",
-    eyebrow: "lp.t4.e",
-    body: "lp.t4.b",
-    ticks: ["lp.t4.k1", "lp.t4.k2", "lp.t4.k3"],
-    href: "/app",
-    Demo: LangDemo,
-  },
+  { tab: "trust.title", body: "lp.t1.b", Demo: TrustDemo },
+  { tab: "lp.t2.t", body: "lp.t2.b", Demo: OverdueDemo },
+  { tab: "qr.title", body: "lp.t3.b", Demo: QrDemo },
+  { tab: "lp.t4.t", body: "lp.t4.b", Demo: LangDemo },
+  { tab: "lp.t5.t", body: "lp.t5.b", Demo: OfflineDemo },
 ];
 
 // Shop QR is hidden for now (see lib/features.ts).
@@ -161,7 +131,7 @@ export function ToolsTabs() {
 
       {/* Anchors and cards are siblings in one container, so each sticky card can pin until the end */}
       <div className="mt-6 md:mt-10">
-        {VISIBLE_TOOLS.map(({ tab, eyebrow, body, ticks, href, Demo }, i) => [
+        {VISIBLE_TOOLS.map(({ tab, body, Demo }, i) => [
           <div
             key={`${tab}-anchor`}
             ref={(el) => {
@@ -198,36 +168,12 @@ export function ToolsTabs() {
                   </div>
                 </div>
                 <div>
-                  <span className="inline-block rounded-sm bg-page px-2 py-1 text-[11px] font-semibold tracking-wide text-ink-muted uppercase">
-                    {t(eyebrow)}
-                  </span>
-                  <h3 className="mt-3 font-heading text-[26px] leading-8 font-semibold tracking-tight text-ink md:text-[30px] md:leading-9">
+                  <h3 className="font-heading text-[26px] leading-8 font-semibold tracking-tight text-ink md:text-[30px] md:leading-9">
                     {t(tab)}
                   </h3>
-                  <p className="mt-2 text-[15px] leading-6 text-ink-subtle">
+                  <p className="mt-3 text-base leading-7 text-ink-subtle">
                     {t(body)}
                   </p>
-                  <ul className="mt-5 space-y-2.5">
-                    {ticks.map((k) => (
-                      <li
-                        key={k}
-                        className="flex items-start gap-2 text-sm text-ink"
-                      >
-                        <CheckCircleIcon
-                          size={18}
-                          className="mt-px shrink-0 text-positive-intense"
-                        />
-                        {t(k)}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={href}
-                    className="mt-6 inline-flex h-11 items-center gap-2 rounded-sm bg-primary px-5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-primary-hover"
-                  >
-                    {t("lp.tools.cta")}
-                    <ArrowRightIcon size={16} />
-                  </Link>
                 </div>
               </article>
             </Reveal>
@@ -486,6 +432,51 @@ function LangDemo() {
         before={<StatementCard lang="en" />}
         after={<StatementCard lang="hi" />}
       />
+    </div>
+  );
+}
+
+/** UD-58 Entries saved with no signal wait with a clock, then sync by themselves when the network is back. */
+function OfflineDemo({ t }: { t: Translate }) {
+  const status = (
+    <Swap
+      before={
+        <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-gray-faded px-3 text-xs font-semibold text-ink-subtle">
+          <span className="h-2 w-2 rounded-full bg-ink-muted" /> {t("lp.t5.offline")}
+        </span>
+      }
+      after={
+        <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-positive-subtle px-3 text-xs font-semibold text-positive">
+          <CheckCircleIcon size={13} /> {t("lp.t5.synced")}
+        </span>
+      }
+    />
+  );
+  const row = (name: string, label: string, show: string) => (
+    <div className={`${show} flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-low`}>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-ink">{name}</p>
+        <p className="text-xs text-ink-muted">{label}</p>
+      </div>
+      <Swap
+        before={
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-notice">
+            <ClockIcon size={12} /> {t("lp.t5.waiting")}
+          </span>
+        }
+        after={
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-positive">
+            <CheckCircleIcon size={12} /> {t("lp.t5.done")}
+          </span>
+        }
+      />
+    </div>
+  );
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">{status}</div>
+      {row("Sunita Sharma", t("offline.pendingUdhaar", { amount: "₹500" }), "lp-in1")}
+      {row("Arjun Mehta", t("offline.pendingCash", { amount: "₹300" }), "lp-in1")}
     </div>
   );
 }

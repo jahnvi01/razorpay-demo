@@ -84,7 +84,11 @@ export function StoriesCarousel() {
         ))}
       </div>
 
-      <div className="mt-6 flex items-center justify-between">
+      {/* Centred controls: previous, the dots, next */}
+      <div className="mt-6 flex items-center justify-center gap-4">
+        <button type="button" onClick={() => goTo(index - 1)} aria-label={t("lp.prev")} className={arrow}>
+          <ChevronLeftIcon size={18} />
+        </button>
         <div className="flex gap-1">
           {STORIES.map((s, i) => (
             <button key={s.name} type="button" onClick={() => goTo(i)} aria-label={t("lp.slide", { n: i + 1, total: STORIES.length })} aria-current={index === i ? "true" : undefined} className="flex h-6 items-center px-1">
@@ -92,14 +96,9 @@ export function StoriesCarousel() {
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => goTo(index - 1)} aria-label={t("lp.prev")} className={arrow}>
-            <ChevronLeftIcon size={18} />
-          </button>
-          <button type="button" onClick={() => goTo(index + 1)} aria-label={t("lp.next")} className={arrow}>
-            <ChevronRightIcon size={18} />
-          </button>
-        </div>
+        <button type="button" onClick={() => goTo(index + 1)} aria-label={t("lp.next")} className={arrow}>
+          <ChevronRightIcon size={18} />
+        </button>
       </div>
     </div>
   );

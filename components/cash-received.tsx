@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { recordCashAction, type FormState } from "@/app/app/ledger-actions";
 import { formatRupees, paiseToInput } from "@/lib/format";
 import { parseAmount } from "@/lib/validation";
+import { enqueue, isNetworkError, isOffline } from "@/lib/offline/outbox";
 import { AmountInput, Field, FormError, PrimaryButton, SecondaryButton } from "./form";
 import { useI18n } from "./i18n-provider";
 
@@ -12,7 +13,23 @@ export function CashReceived({ customerId, duePaise }: { customerId: string; due
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(duePaise > 0 ? paiseToInput(duePaise) : "");
-  const [state, action, pending] = useActionState<FormState, FormData>(recordCashAction, {});
+  // UD-58 Offline or no network: save on the phone and sync later, instead of failing
+  const queue = async (form: FormData): Promise<FormState> => {
+    const amount = parseAmount(form.get("amount"));
+    if (!amount.ok) return { fieldErrors: { amount: amount.error } };
+    await enqueue({ kind: "cash", customerId, amountPaise: amount.value });
+    setOpen(false);
+    return {};
+  };
+  const [state, action, pending] = useActionState<FormState, FormData>(async (prev, form) => {
+    if (isOffline()) return queue(form);
+    try {
+      return await recordCashAction(prev, form);
+    } catch (err) {
+      if (isNetworkError(err)) return queue(form);
+      throw err; // includes the redirect after a normal save
+    }
+  }, {});
 
   if (!open) {
     return (

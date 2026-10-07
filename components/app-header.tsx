@@ -6,6 +6,7 @@ import { useI18n } from "./i18n-provider";
 import Link from "next/link";
 import { InfoIcon, RefreshIcon } from "./icons";
 import { LanguageToggle } from "./language-toggle";
+import { OfflineSync } from "./offline-sync";
 import { RazorpayLogo } from "./razorpay-logo";
 
 export const MERCHANT_NAME = "Ramesh Kirana";
@@ -94,6 +95,7 @@ export function AppHeader() {
           )}
         </div>
       </div>
+      <OfflineSync />
     </header>
   );
 }

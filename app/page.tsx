@@ -31,11 +31,10 @@ function DemoButton({ t, large = false, inverse = false }: { t: Translate; large
 }
 
 /** Centred section heading, like razorpay.com/x. */
-function SectionTitle({ eyebrow, title, sub, dark = false }: { eyebrow: string; title: string; sub?: string; dark?: boolean }) {
+function SectionTitle({ title, sub, dark = false }: { title: string; sub?: string; dark?: boolean }) {
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
-      <p className={`text-xs font-semibold tracking-widest uppercase ${dark ? "text-primary-on-dark" : "text-primary"}`}>{eyebrow}</p>
-      <h2 className={`mt-2 font-heading text-[28px] leading-9 font-semibold tracking-tight md:text-[42px] md:leading-[50px] ${dark ? "text-white" : "text-ink"}`}>{title}</h2>
+      <h2 className={`font-heading text-[28px] leading-9 font-semibold tracking-tight md:text-[42px] md:leading-12.5 ${dark ? "text-white" : "text-ink"}`}>{title}</h2>
       {sub && <p className={`mt-3 text-[15px] leading-6 md:text-base ${dark ? "text-white/65" : "text-ink-subtle"}`}>{sub}</p>}
     </Reveal>
   );
@@ -86,7 +85,7 @@ export default async function LandingPage() {
 
           <div aria-label={t("lp.strip")} role="group" className="border-y border-line bg-surface/80 py-4">
             <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
-              <p className="shrink-0 text-xs font-semibold tracking-wide text-ink-muted uppercase">{t("lp.strip")}</p>
+              <p className="shrink-0 text-sm font-semibold text-ink-muted">{t("lp.strip")}</p>
               <div className="relative min-w-0 flex-1 overflow-hidden mask-[linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
                 <div className="lp-marquee flex w-max gap-3">
                   {[...PAY_METHODS, ...PAY_METHODS].map((m, i) => (
@@ -103,7 +102,7 @@ export default async function LandingPage() {
         {/* 2. The problem */}
         <section id="problem" className="scroll-mt-16 bg-surface py-16 md:py-28">
           <div className="mx-auto max-w-6xl px-4">
-            <SectionTitle eyebrow={t("lp.pb.eyebrow")} title={t("lp.pb.title")} sub={t("lp.pb.sub")} />
+            <SectionTitle title={t("lp.pb.title")} sub={t("lp.pb.sub")} />
             <Problem t={t} />
           </div>
         </section>
@@ -112,7 +111,7 @@ export default async function LandingPage() {
         <section id="market" className="relative scroll-mt-16 overflow-hidden bg-[#0A1630] py-16 md:py-28">
           <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full bg-primary/25 blur-3xl" aria-hidden="true" />
           <div className="relative mx-auto max-w-6xl px-4">
-            <SectionTitle dark eyebrow={t("lp.mk.eyebrow")} title={t("lp.mk.title")} sub={t("lp.mk.sub")} />
+            <SectionTitle dark title={t("lp.mk.title")} sub={t("lp.mk.sub")} />
             <Market t={t} />
           </div>
         </section>
@@ -120,7 +119,7 @@ export default async function LandingPage() {
         {/* 5. Tools, as stacked cards with looping demos */}
         <section id="tools" className="scroll-mt-16 bg-page py-16 md:py-28">
           <div className="mx-auto max-w-6xl px-4">
-            <SectionTitle eyebrow={t("lp.tools.eyebrow")} title={t("lp.tools.title")} />
+            <SectionTitle title={t("lp.tools.title")} />
             <div className="mt-8">
               <ToolsTabs />
             </div>
@@ -130,7 +129,7 @@ export default async function LandingPage() {
         {/* 5b. Who it is for: real shop photos (UD-57) */}
         <section id="shops" className="scroll-mt-16 bg-surface py-16 md:py-28">
           <div className="mx-auto max-w-6xl px-4">
-            <SectionTitle eyebrow={t("lp.seg.eyebrow")} title={t("lp.seg.title")} />
+            <SectionTitle title={t("lp.seg.title")} />
             <Segments t={t} />
           </div>
         </section>
@@ -139,7 +138,7 @@ export default async function LandingPage() {
         <section id="stories" className="relative scroll-mt-16 overflow-hidden bg-[#060D1F] py-16 md:py-28">
           <div className="pointer-events-none absolute -right-40 -bottom-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
           <div className="relative mx-auto max-w-6xl px-4">
-            <SectionTitle dark eyebrow={t("lp.st.eyebrow")} title={t("lp.st.title")} />
+            <SectionTitle dark title={t("lp.st.title")} />
             <Reveal className="mt-10">
               <StoriesCarousel />
             </Reveal>

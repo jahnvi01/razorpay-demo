@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingOps } from "@/components/pending-ops";
 import { notFound } from "next/navigation";
 import { CashReceived } from "@/components/cash-received";
 import { DeletePaymentButton } from "@/components/delete-payment";
@@ -67,6 +68,7 @@ export default async function CustomerDetailPage({ params, searchParams }: PageP
         <SectionHeader title={customer.name} />
         <p className="-mt-2 text-sm text-ink-muted">{formatPhone(customer.phone)}</p>
       </div>
+      <PendingOps customerId={customer.id} />
 
       <Card className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">

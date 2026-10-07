@@ -1,14 +1,17 @@
 "use client";
 
-import { useActionState, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { createEntryAction, type FormState } from "@/app/app/ledger-actions";
 import { formatPhone, formatRupees } from "@/lib/format";
 import { CustomerFields } from "./customer-fields";
 import { AmountInput, Field, FormError, PrimaryButton, TextInput } from "./form";
 import { useI18n } from "./i18n-provider";
-import { PlusIcon, SearchIcon } from "./icons";
+import { ClockIcon, PlusIcon, SearchIcon } from "./icons";
 import { TrustMeter } from "./trust-meter";
 import { MIN_CLEARED_FOR_TRUST, type Trust } from "@/lib/trust";
+import { enqueue, isNetworkError, isOffline } from "@/lib/offline/outbox";
+import { parseAmount, parseDueDate, parseNote } from "@/lib/validation";
+import { QUEUED_FLAG } from "./pending-ops";
 
 export type PickerCustomer = { id: string; name: string; phone: string; duePaise: number; trust: Trust | null };
 
@@ -25,7 +28,38 @@ export function UdhaarForm({
   today: string;
 }) {
   const { t, lang } = useI18n();
-  const [state, action, pending] = useActionState<FormState, FormData>(createEntryAction, {});
+  const [queued, setQueued] = useState<{ id: string; name: string; amountPaise: number } | null>(null);
+  // UD-58 Offline or no network: udhaar for an existing customer is saved on the phone and syncs later.
+  // A new customer needs the network (their phone number must be checked first).
+  const queue = async (form: FormData): Promise<FormState> => {
+    const customerId = String(form.get("customerId") ?? "");
+    if (form.get("mode") === "new" || !customerId) return { error: "offline.newCustomer" };
+    const amount = parseAmount(form.get("amount"));
+    const due = parseDueDate(form.get("dueDate"), today);
+    const noteR = parseNote(form.get("note"));
+    const fieldErrors: NonNullable<FormState["fieldErrors"]> = {};
+    if (!amount.ok) fieldErrors.amount = amount.error;
+    if (!due.ok) fieldErrors.dueDate = due.error;
+    if (!noteR.ok) fieldErrors.note = noteR.error;
+    if (!amount.ok || !due.ok || !noteR.ok) return { fieldErrors };
+    const who = customers.find((c) => c.id === customerId);
+    await enqueue({ kind: "udhaar", customerId, customerName: who?.name, amountPaise: amount.value, dueDate: due.value, note: noteR.value });
+    try {
+      sessionStorage.setItem(QUEUED_FLAG, "udhaar");
+    } catch {}
+    // Confirm here rather than navigating: offline, the router's own failed requests cancel navigation
+    setQueued({ id: customerId, name: who?.name ?? "", amountPaise: amount.value });
+    return {};
+  };
+  const [state, action, pending] = useActionState<FormState, FormData>(async (prev, form) => {
+    if (isOffline()) return queue(form);
+    try {
+      return await createEntryAction(prev, form);
+    } catch (err) {
+      if (isNetworkError(err)) return queue(form);
+      throw err; // includes the redirect after a normal save
+    }
+  }, {});
   const [mode, setMode] = useState<"existing" | "new">(customers.length ? "existing" : "new");
   const [selectedId, setSelectedId] = useState<string | null>(
     customers.some((c) => c.id === preselectedId) ? preselectedId : null,
@@ -36,6 +70,13 @@ export function UdhaarForm({
   const [dueDate, setDueDate] = useState(defaultDue);
   const [note, setNote] = useState("");
   const amountRef = useRef<HTMLInputElement>(null);
+
+  // UD-58 Offline the cached form has no server-side preselect, so read ?customer= here instead
+  useEffect(() => {
+    if (preselectedId) return;
+    const id = new URLSearchParams(window.location.search).get("customer");
+    if (id && customers.some((c) => c.id === id)) setSelectedId(id); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [preselectedId, customers]);
 
   const selected = customers.find((c) => c.id === selectedId) ?? null;
   const matches = useMemo(() => {
@@ -51,6 +92,37 @@ export function UdhaarForm({
     // Next thing to type is the amount.
     requestAnimationFrame(() => amountRef.current?.focus());
   };
+
+  if (queued) {
+    return (
+      <div className="space-y-4 rounded-lg border border-dashed border-line-strong bg-surface p-5" role="status">
+        <p className="flex items-center gap-2 text-sm font-semibold text-notice">
+          <ClockIcon size={16} /> {t("offline.pendingTitle")}
+        </p>
+        <p className="text-[15px] font-semibold text-ink">
+          {t("offline.pendingUdhaar", { amount: formatRupees(queued.amountPaise) })} · {queued.name}
+        </p>
+        <p className="text-sm text-ink-subtle">{t("offline.queued")}</p>
+        <div className="grid gap-2">
+          {/* A plain link: a full page load, which the service worker serves from its copy when offline */}
+          <a href={`/app/customers/${queued.id}`} className="flex h-12 items-center justify-center rounded-sm bg-primary text-[15px] font-semibold text-white hover:bg-primary-hover">
+            {t("offline.openCustomer", { name: queued.name })}
+          </a>
+          <button
+            type="button"
+            onClick={() => {
+              setQueued(null);
+              setAmount("");
+              setNote("");
+            }}
+            className="flex h-12 items-center justify-center rounded-sm border border-line-strong text-[15px] font-semibold text-ink hover:bg-gray-faded"
+          >
+            {t("offline.recordAnother")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form action={action} className="space-y-5" noValidate>
