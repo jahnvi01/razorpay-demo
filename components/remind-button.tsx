@@ -7,7 +7,7 @@ import { useI18n } from "./i18n-provider";
 import { CheckIcon, MessageSquareIcon, WhatsAppIcon } from "./icons";
 
 const iconButton =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ease-standard focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ease-standard focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60";
 
 /**
  * UD-21, UD-24 and UD-51 One-tap reminders for list rows, as two icon buttons: WhatsApp opens the
@@ -54,7 +54,7 @@ export function RemindButton({ customerId }: { customerId: string }) {
         title={status === "waFailed" ? message : t("remind.whatsapp")}
         className={`${iconButton} bg-[#25D366] text-white hover:bg-[#1DA851] ${status === "waFailed" ? "ring-2 ring-negative" : ""}`}
       >
-        <WhatsAppIcon size={20} />
+        <WhatsAppIcon size={18} />
       </button>
       <button
         type="button"
@@ -73,9 +73,9 @@ export function RemindButton({ customerId }: { customerId: string }) {
         {smsPending ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />
         ) : status === "smsSent" ? (
-          <CheckIcon size={18} />
+          <CheckIcon size={16} />
         ) : (
-          <MessageSquareIcon size={18} />
+          <MessageSquareIcon size={16} />
         )}
       </button>
       <span className="sr-only" role="status" aria-live="polite">

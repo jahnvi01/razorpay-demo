@@ -20,7 +20,8 @@ export function SectionHeader({ title, action }: { title: string; action?: React
 }
 
 // Amount in Razorpay's style: small rupee sign, large rupees, small muted paise.
-export function Amount({ paise, size = "lg" }: { paise: number; size?: "sm" | "md" | "lg" | "xl" }) {
+/** `compact` drops ".00" on whole rupee amounts, for dense lists. */
+export function Amount({ paise, size = "lg", compact = false }: { paise: number; size?: "sm" | "md" | "lg" | "xl"; compact?: boolean }) {
   const rupees = Math.trunc(paise / 100).toLocaleString("en-IN");
   const fraction = String(Math.abs(paise) % 100).padStart(2, "0");
   const big = { sm: "text-base", md: "text-xl", lg: "text-[28px]", xl: "text-[40px]" }[size];
@@ -29,7 +30,7 @@ export function Amount({ paise, size = "lg" }: { paise: number; size?: "sm" | "m
     <span className="inline-flex items-baseline font-semibold text-ink tabular-nums">
       <span className={`${small} mr-0.5 font-medium text-ink-subtle`}>₹</span>
       <span className={`${big} leading-none`}>{rupees}</span>
-      <span className={`${small} font-medium text-ink-muted`}>.{fraction}</span>
+      {!(compact && fraction === "00") && <span className={`${small} font-medium text-ink-muted`}>.{fraction}</span>}
     </span>
   );
 }

@@ -64,6 +64,9 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-50 | Last reminder on Dues rows | 4 | Could | S | Done |
 | UD-51 | Dues rows: no phone, WhatsApp and SMS icon buttons | 4 | Should | S | Done |
 | UD-52 | Fewer numbers on home | 1 | Could | S | Done |
+| UD-53 | Calmer Dues list and floating button spacing | 4 | Should | S | Done |
+| UD-54 | Compact Dues header with the total in the title | 4 | Could | S | Test |
+| UD-55 | Two line Dues rows of equal height | 4 | Could | S | Test |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -160,6 +163,36 @@ No tickets yet.
 No tickets yet.
 
 ## Test
+
+### UD-55 · Two line Dues rows of equal height
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Test
+- Dependencies: UD-54
+- User story: As a merchant, I want every Dues row the same height so the list is calm to scan.
+
+**Acceptance criteria**
+- Every row is two lines: name with the last reminder hint, then amount with a late badge or a green due date
+- The overdue part folds into the badge, for example ₹1,000 · 15 days late
+- Full names fit at 360 px. English and Hindi. Local only until the user approves
+
+- Notes: built locally, not deployed. All rows measure 71 px. English hint is the channel icon plus yesterday, Hindi keeps कल याद दिलाया, and screen readers hear Reminded yesterday (WhatsApp). No text is cut off at 360 or 390 px. 43 app checks and 15 Dues checks pass locally
+
+### UD-54 · Compact Dues header with the total in the title
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Test
+- Dependencies: UD-47, UD-53
+- User story: As a merchant, I want the Dues summary to take little space so I see more customers.
+
+**Acceptance criteria**
+- The summary card is gone. The title reads Dues with the total next to it, and the customer count on the right
+- One row of chips: All with count, and Overdue with count and amount, which toggles the filter
+- Sort is a small Amount or Recent menu in the same row
+- English and Hindi, works at 360 px. Local only until the user approves
+- Notes: built locally, not deployed. Title reads Dues ₹9,835 · 5 customers on one line. Chips All 5 and Overdue 2 · ₹2,090, sort is a small Amount menu with Amount and Recent. The list now starts 93 px below the title, down from about 230 px, and all 5 customers fit on one iPhone screen. Reminder line is the channel icon (WhatsApp or SMS) with Reminded yesterday, or a bell with Not reminded, so nothing is cut off. 43 app checks, 15 Dues checks and 11 One tap reminder checks pass locally. Waiting for the user's review before deploying
 
 ### UD-49 · One tap reminders: bulk SMS to overdue customers
 - Phase: 4
@@ -260,6 +293,21 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-53 · Calmer Dues list and floating button spacing
+- Phase: 4
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-49, UD-51
+- User story: As a merchant on an iPhone, I want the Dues list to be easy to scan and the reminder button not to sit on the tab bar.
+
+**Acceptance criteria**
+- One tap reminders sits clear above the tab bar, including the iPhone home indicator area
+- Badges only for overdue. Not yet due shows plain green text Due on 11 Oct
+- Rows are compact: whole rupee amounts without .00, overdue part and last reminder on one line, smaller icon buttons
+
+- Notes: floating button bottom is the tab bar height plus the safe area plus 16 px. Amount has a compact option for lists. 5 customers now fit on one iPhone screen. Hindi reads 11 अक्टू॰ को देय. 43 app checks and 15 Dues checks pass on production
 
 ### UD-52 · Fewer numbers on home
 - Phase: 1
