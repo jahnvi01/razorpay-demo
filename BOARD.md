@@ -65,8 +65,10 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-51 | Dues rows: no phone, WhatsApp and SMS icon buttons | 4 | Should | S | Done |
 | UD-52 | Fewer numbers on home | 1 | Could | S | Done |
 | UD-53 | Calmer Dues list and floating button spacing | 4 | Should | S | Done |
-| UD-54 | Compact Dues header with the total in the title | 4 | Could | S | Test |
-| UD-55 | Two line Dues rows of equal height | 4 | Could | S | Test |
+| UD-54 | Compact Dues header with the total in the title | 4 | Could | S | Done |
+| UD-55 | Two line Dues rows of equal height | 4 | Could | S | Done |
+| UD-56 | Landing hero acts out the journey on a phone, OkCredit style | 6 | Should | M | Done |
+| UD-57 | Shop segments with real photos on the landing page | 6 | Should | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -163,36 +165,6 @@ No tickets yet.
 No tickets yet.
 
 ## Test
-
-### UD-55 · Two line Dues rows of equal height
-- Phase: 4
-- Priority: Could
-- Size: S
-- Status: Test
-- Dependencies: UD-54
-- User story: As a merchant, I want every Dues row the same height so the list is calm to scan.
-
-**Acceptance criteria**
-- Every row is two lines: name with the last reminder hint, then amount with a late badge or a green due date
-- The overdue part folds into the badge, for example ₹1,000 · 15 days late
-- Full names fit at 360 px. English and Hindi. Local only until the user approves
-
-- Notes: built locally, not deployed. All rows measure 71 px. English hint is the channel icon plus yesterday, Hindi keeps कल याद दिलाया, and screen readers hear Reminded yesterday (WhatsApp). No text is cut off at 360 or 390 px. 43 app checks and 15 Dues checks pass locally
-
-### UD-54 · Compact Dues header with the total in the title
-- Phase: 4
-- Priority: Could
-- Size: S
-- Status: Test
-- Dependencies: UD-47, UD-53
-- User story: As a merchant, I want the Dues summary to take little space so I see more customers.
-
-**Acceptance criteria**
-- The summary card is gone. The title reads Dues with the total next to it, and the customer count on the right
-- One row of chips: All with count, and Overdue with count and amount, which toggles the filter
-- Sort is a small Amount or Recent menu in the same row
-- English and Hindi, works at 360 px. Local only until the user approves
-- Notes: built locally, not deployed. Title reads Dues ₹9,835 · 5 customers on one line. Chips All 5 and Overdue 2 · ₹2,090, sort is a small Amount menu with Amount and Recent. The list now starts 93 px below the title, down from about 230 px, and all 5 customers fit on one iPhone screen. Reminder line is the channel icon (WhatsApp or SMS) with Reminded yesterday, or a bell with Not reminded, so nothing is cut off. 43 app checks, 15 Dues checks and 11 One tap reminder checks pass locally. Waiting for the user's review before deploying
 
 ### UD-49 · One tap reminders: bulk SMS to overdue customers
 - Phase: 4
@@ -293,6 +265,68 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-57 · Shop segments with real photos on the landing page
+- Phase: 6
+- Priority: Should
+- Size: S
+- Status: Done
+- Dependencies: UD-39
+- User story: As a visitor, I want to see the kind of shop I run, so I know Udhaar Suite is for me.
+
+**Acceptance criteria**
+- A section before How shops like yours use it, with three photo cards: Kirana stores, Milk and dairy, Wholesale and distribution
+- Real photos of Indian shops under a free licence, saved in the app and small
+- Each card has the segment name and one line on how udhaar works there, over a dark fade
+- Three in a row on desktop, a swipe row on phones. English and Hindi. Page still loads in under 2 seconds on 4G
+- Notes: three free Unsplash License photos (kirana storefront by Zoshua Colah, dairy farmer by Satyabratasm, trader among grain sacks by kabir cheema), cropped 4:5 and saved as 62 to 75 KB WebP in public/landing/shops with CREDITS.txt. components/landing/segments.tsx, lazy loaded through next/image, placed before the merchant stories. 26 landing checks pass on production, load 0.92 s on Fast 4G with a 4x CPU slowdown
+
+### UD-56 · Landing hero acts out the journey on a phone, OkCredit style
+- Phase: 6
+- Priority: Should
+- Size: M
+- Status: Done
+- Dependencies: UD-38, UD-45
+- User story: As a visitor, I want the hero to show the whole udhaar journey on a phone in a few seconds, so I get it without scrolling.
+
+**Acceptance criteria**
+- Desktop: text on the left, phone on the right. Phone: headline, then phone, then paragraph and App Demo
+- The headline is three steps, Record udhaar, Remind in one tap, Get paid on time, and the current step lights up with the phone
+- The phone plays one continuous story every few seconds: udhaar recorded on Sunita's screen, WhatsApp reminder, UPI payment, balance cleared
+- Step pills under the phone follow along and can be tapped
+- The How it works section and the static collage are removed
+- English and Hindi, reduced motion stops autoplay, no sideways scroll at 360 px, App Demo visible without scrolling, loads in under 2 seconds on 4G
+- Notes: components/landing/hero-story.tsx drives the headline, phone and pills from one timeline of four scenes (about 11 s a loop): udhaar on Sunita's ledger screen, WhatsApp message, UPI pay screen, payment entry with balance ₹0 and Udhaar cleared. Pauses when off screen, never autoplays for reduced motion. Removed the How it works scroll story, the hero collage, unused phone screens and 19 unused strings. Fixed the notch overlapping the ledger header. 26 landing checks on production, 43 app checks and 15 unit tests pass. Production load 0.92 s on Fast 4G with a 4x CPU slowdown
+
+### UD-55 · Two line Dues rows of equal height
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-54
+- User story: As a merchant, I want every Dues row the same height so the list is calm to scan.
+
+**Acceptance criteria**
+- Every row is two lines: name with the last reminder hint, then amount with a late badge or a green due date
+- The overdue part folds into the badge, for example ₹1,000 · 15 days late
+- Full names fit at 360 px. English and Hindi. Local only until the user approves
+
+- Notes: deployed to production on 7 October after the user's review. All rows measure 71 px. English hint is the channel icon plus yesterday, Hindi keeps कल याद दिलाया, and screen readers hear Reminded yesterday (WhatsApp). No text is cut off at 360 or 390 px. 43 app checks and 15 Dues checks pass locally
+
+### UD-54 · Compact Dues header with the total in the title
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-47, UD-53
+- User story: As a merchant, I want the Dues summary to take little space so I see more customers.
+
+**Acceptance criteria**
+- The summary card is gone. The title reads Dues with the total next to it, and the customer count on the right
+- One row of chips: All with count, and Overdue with count and amount, which toggles the filter
+- Sort is a small Amount or Recent menu in the same row
+- English and Hindi, works at 360 px. Local only until the user approves
+- Notes: deployed to production on 7 October after the user's review. Title reads Dues ₹9,835 · 5 customers on one line. Chips All 5 and Overdue 2 · ₹2,090, sort is a small Amount menu with Amount and Recent. The list now starts 93 px below the title, down from about 230 px, and all 5 customers fit on one iPhone screen. Reminder line is the channel icon (WhatsApp or SMS) with Reminded yesterday, or a bell with Not reminded, so nothing is cut off. 43 app checks, 15 Dues checks and 11 One tap reminder checks pass locally. Waiting for the user's review before deploying
 
 ### UD-53 · Calmer Dues list and floating button spacing
 - Phase: 4

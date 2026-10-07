@@ -1,0 +1,3 @@
+kirana: "A store front with many items on display" by Zoshua Colah (https://unsplash.com/photos/bAKYjjvAQIE), Unsplash License
+dairy: "a woman is milking a cow in a field" by Satyabratasm (https://unsplash.com/photos/xuNnsMvL7NQ), Unsplash License
+wholesale: "man standing near pile of sacks" by kabir cheema (https://unsplash.com/photos/IQEGXr_702o), Unsplash License

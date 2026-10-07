@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRightIcon, StorefrontIcon } from "@/components/icons";
-import { FlowStory } from "@/components/landing/flow-story";
-import { HeroCollage } from "@/components/landing/hero-collage";
+import { ArrowRightIcon } from "@/components/icons";
+import { HeroStory } from "@/components/landing/hero-story";
 import { Reveal } from "@/components/landing/reveal";
+import { Segments } from "@/components/landing/segments";
 import { Market } from "@/components/landing/market";
 import { Problem } from "@/components/landing/problem";
 import { StoriesCarousel } from "@/components/landing/stories-carousel";
@@ -61,7 +61,6 @@ export default async function LandingPage() {
           <nav aria-label="Sections" className="hidden items-center gap-5 text-sm font-medium text-ink-subtle lg:flex">
             <a href="#problem" className="hover:text-ink">{t("lp.nav.problem")}</a>
             <a href="#market" className="hover:text-ink">{t("lp.nav.market")}</a>
-            <a href="#flow" className="hover:text-ink">{t("lp.nav.how")}</a>
             <a href="#tools" className="hover:text-ink">{t("lp.nav.tools")}</a>
             <a href="#stories" className="hover:text-ink">{t("lp.nav.stories")}</a>
           </nav>
@@ -71,28 +70,19 @@ export default async function LandingPage() {
       </header>
 
       <main>
-        {/* 1. Hero: centred headline over the app, with what it does floating around it */}
+        {/* 1. Hero: the journey in three steps, acted out on a phone (UD-56) */}
         <section className="relative overflow-hidden bg-linear-to-b from-[#EAF1FF] via-[#F5F8FF] to-surface">
-          <div className="mx-auto max-w-6xl px-4 pt-10 text-center md:pt-16">
-            <div>
-              <p style={{ animationDelay: "0ms" }} className="lp-rise inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary shadow-low ring-1 ring-primary/15">
-                <StorefrontIcon size={14} />
-                {t("landing.tagline")}
-              </p>
-              <h1 style={{ animationDelay: "120ms" }} className="lp-rise mx-auto mt-4 max-w-3xl font-heading text-[34px] leading-10 font-semibold tracking-tight text-ink md:text-[56px] md:leading-15.5">
-                {t("lp.hero.title1")} <span className="text-primary">{t("lp.hero.title2")}</span>
-              </h1>
-              <p style={{ animationDelay: "240ms" }} className="lp-rise mx-auto mt-4 max-w-xl text-[15px] leading-6 text-ink-subtle md:text-base">{t("landing.subtitle")}</p>
-              <div style={{ animationDelay: "360ms" }} className="lp-rise mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <DemoButton t={t} large />
-                <a href="#flow" className="inline-flex h-12 items-center justify-center rounded-sm px-5 text-[15px] font-semibold text-primary hover:bg-primary-faded">
-                  {t("lp.hero.see")}
-                </a>
-              </div>
-              <p className="mt-2 text-xs text-ink-muted">{t("landing.demoHint")}</p>
-            </div>
-            <HeroCollage t={t} />
-          </div>
+          <HeroStory
+            cta={
+              <>
+                <p className="max-w-md text-[15px] leading-6 text-ink-subtle md:text-base">{t("landing.subtitle")}</p>
+                <div className="mt-6">
+                  <DemoButton t={t} large />
+                </div>
+                <p className="mt-2 text-xs text-ink-muted">{t("landing.demoHint")}</p>
+              </>
+            }
+          />
 
           <div aria-label={t("lp.strip")} role="group" className="border-y border-line bg-surface/80 py-4">
             <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
@@ -127,16 +117,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* 4. The fix, as a scroll story */}
-        <section id="flow" className="scroll-mt-16 bg-surface pt-16 pb-10 md:pt-28 md:pb-16">
-          <div className="mx-auto max-w-6xl px-4">
-            <SectionTitle eyebrow={t("lp.nav.how")} title={t("lp.flow.title")} sub={t("lp.flow.sub")} />
-            <div className="mt-8 md:mt-4">
-              <FlowStory />
-            </div>
-          </div>
-        </section>
-
         {/* 5. Tools, as stacked cards with looping demos */}
         <section id="tools" className="scroll-mt-16 bg-page py-16 md:py-28">
           <div className="mx-auto max-w-6xl px-4">
@@ -144,6 +124,14 @@ export default async function LandingPage() {
             <div className="mt-8">
               <ToolsTabs />
             </div>
+          </div>
+        </section>
+
+        {/* 5b. Who it is for: real shop photos (UD-57) */}
+        <section id="shops" className="scroll-mt-16 bg-surface py-16 md:py-28">
+          <div className="mx-auto max-w-6xl px-4">
+            <SectionTitle eyebrow={t("lp.seg.eyebrow")} title={t("lp.seg.title")} />
+            <Segments t={t} />
           </div>
         </section>
 
