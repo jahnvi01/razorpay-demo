@@ -134,6 +134,10 @@ body {
 .lp-reveal-group.lp-reveal-scale:not(.is-visible) > * { transform: scale(0.9); }
 
 
+/* UD-60 Market card clock hand */
+@keyframes lp-clock { to { transform: translateX(-50%) rotate(360deg); } }
+.lp-clock { animation: lp-clock 3s linear infinite; }
+
 /* UD-42 Bottom sheet */
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -171,7 +175,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lp-in1, .lp-in2, .lp-in3, .lp-grow1, .lp-grow2 { animation: none !important; }
   .lp-out2, .lp-cursor, .lp-ripple { display: none; }
-  .sheet-up, .sheet-fade { animation: none !important; }
+  .sheet-up, .sheet-fade, .lp-clock { animation: none !important; }
   .lp-fade-up, .lp-rise, .lp-pop, .lp-fill, .lp-float, .lp-tap, .lp-marquee { animation: none !important; }
   .lp-reveal, .lp-reveal-group > * { opacity: 1 !important; transform: none !important; filter: none !important; transition: none; }
 }

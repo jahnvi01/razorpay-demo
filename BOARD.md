@@ -69,8 +69,9 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-55 | Two line Dues rows of equal height | 4 | Could | S | Done |
 | UD-56 | Landing hero acts out the journey on a phone, OkCredit style | 6 | Should | M | Done |
 | UD-57 | Shop segments with real photos on the landing page | 6 | Should | S | Done |
-| UD-58 | Offline mode and auto sync for low network areas | V2 | Should | L | Test |
-| UD-59 | Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels | 6 | Could | S | Test |
+| UD-58 | Offline mode and auto sync for low network areas | V2 | Should | L | Done |
+| UD-59 | Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels | 6 | Could | S | Done |
+| UD-60 | Market figures: MSMEs, cash-heavy shops, delayed payments, with icons | 6 | Could | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -167,40 +168,6 @@ No tickets yet.
 No tickets yet.
 
 ## Test
-
-### UD-59 · Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels
-- Phase: 6
-- Priority: Could
-- Size: S
-- Status: Test
-- Dependencies: UD-56, UD-58
-- User story: As a visitor, I want a calmer landing page with less repetition.
-
-**Acceptance criteria**
-- Hero text and App Demo are centred on phones, left aligned on desktop
-- Tool cards show only a title, one line and the demo, no Try it button and no ticks. The offline card is called Low network support
-- Merchant story dots are centred between the arrows
-- No all caps labels: section eyebrows removed, hero line and payment strip label in normal case
-
-- Notes: built locally with UD-58, not deployed. Removed 24 unused strings. 26 landing checks pass locally. Waiting for the user's go ahead to deploy together with UD-58
-
-### UD-58 · Offline mode and auto sync for low network areas
-- Phase: V2 (first slice of UD-29)
-- Priority: Should
-- Size: L
-- Status: Test
-- Dependencies: UD-08, UD-10, UD-04
-- User story: As a merchant in a low network area, I want to keep recording udhaar and cash, and have it sync by itself when the network comes back.
-
-**Acceptance criteria**
-- Home, Customers, Dues and customer screens open offline from the last copy on the phone
-- Give udhaar and Cash received for existing customers save on the phone at once when offline or when the network fails, and show as waiting to sync
-- A strip shows Offline and how many changes are waiting, with Sync now
-- Changes sync automatically when the network is back, in order, never twice, and the pay link and SMS go out once per customer after sync
-- Adding a new customer offline says it needs network
-- Landing tools section describes working on low network
-- English and Hindi. Local only, not deployed until the user says so
-- Notes: built and tested locally, not deployed. Migration 1000 (sync_ops log and apply_sync_op, applied to Supabase because local and production share it, additive and unused by production) keeps each change at most once with the phone's own time. /api/sync takes up to 50 queued changes, rejects bad ones and changes for customers gone after a reset, then refreshes the pay link and SMS once per customer. lib/offline/outbox.ts is the IndexedDB queue. OfflineSync in the header shows the strip, syncs on reconnect, on return to the app and with backoff, and keeps the main screens cached. The service worker serves app screens from cache when the network does not answer in 4 seconds. Give udhaar and Cash received queue when offline or when the request fails. An offline udhaar shows its confirmation on the form with Open customer. 18 offline checks, 43 app checks, 42 unit and database tests and 26 landing checks pass locally. Landing tools section has a fifth card, Works on low network. Waiting for the user's go ahead to deploy
 
 ### UD-49 · One tap reminders: bulk SMS to overdue customers
 - Phase: 4
@@ -301,6 +268,55 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-60 · Market figures: MSMEs, cash-heavy shops, delayed payments, with icons
+- Phase: 6
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-45
+- User story: As a visitor, I want three clear numbers that show how big and how stuck the udhaar problem is.
+
+**Acceptance criteria**
+- Cards: 6.3 crore MSMEs (Ministry of MSME, via PIB), 80%+ retail stores still cash-heavy (Invest India), ₹7.34 lakh crore owed to small businesses in delayed payments (GAME, FISME and C2FO, March 2024)
+- Each card has an icon that depicts it: shops, cash, hourglass. Each keeps its source link
+- English and Hindi
+
+- Notes: replaced the 1.3 crore kiranas and ₹30 lakh crore credit gap cards. After review the line icons were replaced by small charts of each number that draw on scroll: 48 shop tiles lighting up, a ring sweeping to 80% cash against digital, coin stacks piling up beside a ticking clock. Reduced motion shows the final state. 26 landing checks pass on production
+
+### UD-59 · Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels
+- Phase: 6
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-56, UD-58
+- User story: As a visitor, I want a calmer landing page with less repetition.
+
+**Acceptance criteria**
+- Hero text and App Demo are centred on phones, left aligned on desktop
+- Tool cards show only a title, one line and the demo, no Try it button and no ticks. The offline card is called Low network support
+- Merchant story dots are centred between the arrows
+- No all caps labels: section eyebrows removed, hero line and payment strip label in normal case
+
+- Notes: built locally with UD-58, not deployed. Removed 24 unused strings. 26 landing checks pass locally. Waiting for the user's go ahead to deploy together with UD-58 Deployed to production on 8 October. 26 landing checks pass on production, load 0.91 s on Fast 4G with a 4x CPU slowdown.
+
+### UD-58 · Offline mode and auto sync for low network areas
+- Phase: V2 (first slice of UD-29)
+- Priority: Should
+- Size: L
+- Status: Done
+- Dependencies: UD-08, UD-10, UD-04
+- User story: As a merchant in a low network area, I want to keep recording udhaar and cash, and have it sync by itself when the network comes back.
+
+**Acceptance criteria**
+- Home, Customers, Dues and customer screens open offline from the last copy on the phone
+- Give udhaar and Cash received for existing customers save on the phone at once when offline or when the network fails, and show as waiting to sync
+- A strip shows Offline and how many changes are waiting, with Sync now
+- Changes sync automatically when the network is back, in order, never twice, and the pay link and SMS go out once per customer after sync
+- Adding a new customer offline says it needs network
+- Landing tools section describes working on low network
+- English and Hindi. Local only, not deployed until the user says so
+- Notes: built and tested locally, not deployed. Migration 1000 (sync_ops log and apply_sync_op, applied to Supabase because local and production share it, additive and unused by production) keeps each change at most once with the phone's own time. /api/sync takes up to 50 queued changes, rejects bad ones and changes for customers gone after a reset, then refreshes the pay link and SMS once per customer. lib/offline/outbox.ts is the IndexedDB queue. OfflineSync in the header shows the strip, syncs on reconnect, on return to the app and with backoff, and keeps the main screens cached. The service worker serves app screens from cache when the network does not answer in 4 seconds. Give udhaar and Cash received queue when offline or when the request fails. An offline udhaar shows its confirmation on the form with Open customer. 18 offline checks, 43 app checks, 42 unit and database tests and 26 landing checks pass locally. Landing tools section has a fifth card, Works on low network. Waiting for the user's go ahead to deploy Deployed to production on 8 October. 18 offline checks pass on production.
 
 ### UD-57 · Shop segments with real photos on the landing page
 - Phase: 6
