@@ -1,5 +1,6 @@
 import { isAuthorizedCron } from "@/lib/cron-auth";
 import { addDays, todayIST } from "@/lib/dates";
+import { digestFacts, digestMessage, sendToShop } from "@/lib/push";
 import { syncPayLink } from "@/lib/razorpay/pay-links";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
@@ -8,6 +9,9 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
  * `Authorization: Bearer $CRON_SECRET`. Sends one Razorpay SMS per customer with udhaar due tomorrow.
  * Demo customers are skipped (they never get automatic SMS), and so is anyone already reminded today.
  * `?date=YYYY-MM-DD` runs it as if that were today, for testing.
+ * UD-61 The same run sends each shop's morning digest push (who is late or due today, with Remind
+ * all), skipped when there is nothing to act on. Skipped too when `?date=` is set, since the digest
+ * always describes the real today.
  */
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -55,6 +59,26 @@ export async function GET(request: Request) {
     }
   }
 
-  console.info("day-before reminders", result);
-  return Response.json(result);
+  const digests = param ? 0 : await sendDigests();
+  console.info("day-before reminders", result, { digests });
+  return Response.json({ ...result, digests });
+}
+
+/** UD-61 #1 One digest per shop that has notifications on. Returns how many devices got one. */
+async function sendDigests(): Promise<number> {
+  const { data, error } = await supabaseAdmin().from("push_subscriptions").select("sandbox_id");
+  if (error) {
+    console.error("digest: push subscriptions", error.message);
+    return 0;
+  }
+  let sent = 0;
+  for (const sandboxId of new Set((data ?? []).map((r) => r.sandbox_id as string))) {
+    try {
+      const facts = await digestFacts(sandboxId);
+      if (facts) sent += await sendToShop(sandboxId, (lang) => digestMessage(facts, lang));
+    } catch (err) {
+      console.error("digest failed", sandboxId, err);
+    }
+  }
+  return sent;
 }

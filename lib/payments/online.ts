@@ -1,4 +1,6 @@
 import "server-only";
+import { getCustomer } from "@/lib/data/customers";
+import { paymentMessage, sendToShop } from "@/lib/push";
 import { broadcastLedgerChange } from "@/lib/realtime";
 import { syncPayLink } from "@/lib/razorpay/pay-links";
 import { razorpay } from "@/lib/razorpay/server";
@@ -31,8 +33,22 @@ export async function recordOnlinePayment(input: RecordInput, baseUrl: string): 
   });
   if (error) throw new Error(`record online payment: ${error.message}`);
   const created = Boolean((data as { created: boolean }[])[0]?.created);
-  if (created) await afterOnlinePayment(input.sandboxId, input.customerId, baseUrl);
+  if (created) {
+    await afterOnlinePayment(input.sandboxId, input.customerId, baseUrl);
+    await notifyPaid(input.sandboxId, input.customerId, input.amountPaise);
+  }
   return created;
+}
+
+/** UD-61 #2 Tells the merchant's phones that a customer paid and what is left. Never throws. */
+async function notifyPaid(sandboxId: string, customerId: string, amountPaise: number): Promise<void> {
+  try {
+    const c = await getCustomer(sandboxId, customerId);
+    if (!c) return;
+    await sendToShop(sandboxId, (lang) => paymentMessage({ customerId, name: c.name, amountPaise, remainingPaise: c.duePaise }, lang));
+  } catch (err) {
+    console.error("payment push failed", err);
+  }
 }
 
 /** Refresh the pay link for the new balance, then tell open screens. Never throws. */

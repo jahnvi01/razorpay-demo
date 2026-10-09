@@ -45,6 +45,18 @@ export function OneTapReminders({
     setOpen(false);
   };
 
+  // UD-61 The morning digest's Remind all lands on ?remind=1: open the sheet straight away, once
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("remind") !== "1") return;
+    url.searchParams.delete("remind");
+    show(); // eslint-disable-line react-hooks/set-state-in-effect
+    // Once hydration is done, and with null state, so the Next router adopts the new URL instead of
+    // putting remind=1 back
+    const id = setTimeout(() => window.history.replaceState(null, "", url.pathname + url.search), 50);
+    return () => clearTimeout(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!open) return;
     sendRef.current?.focus();

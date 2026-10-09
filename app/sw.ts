@@ -50,3 +50,43 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// UD-61 Merchant push notifications: the 10 am digest (with Remind all) and payment received.
+type PushData = { title: string; body: string; url: string; tag: string; actions?: { action: string; title: string; url: string }[] };
+
+self.addEventListener("push", (event) => {
+  let data: PushData;
+  try {
+    data = event.data?.json() as PushData;
+  } catch {
+    return;
+  }
+  if (!data?.title) return;
+  const options: NotificationOptions & { actions?: { action: string; title: string }[] } = {
+    body: data.body,
+    tag: data.tag,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { url: data.url, actions: Object.fromEntries((data.actions ?? []).map((a) => [a.action, a.url])) },
+    actions: (data.actions ?? []).map(({ action, title }) => ({ action, title })),
+  };
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const d = (event.notification.data ?? {}) as { url?: string; actions?: Record<string, string> };
+  const target = new URL((event.action && d.actions?.[event.action]) || d.url || "/app", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        await open.navigate(target).catch(() => self.clients.openWindow(target));
+        return;
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

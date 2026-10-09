@@ -7,6 +7,7 @@ import Link from "next/link";
 import { InfoIcon, RefreshIcon } from "./icons";
 import { LanguageToggle } from "./language-toggle";
 import { OfflineSync } from "./offline-sync";
+import { PushSettings } from "./push-settings";
 import { RazorpayLogo } from "./razorpay-logo";
 
 export const MERCHANT_NAME = "Ramesh Kirana";
@@ -55,7 +56,7 @@ export function AppHeader() {
           {menuOpen && (
             <div
               role="menu"
-              className="absolute top-12 right-0 w-60 overflow-hidden rounded-md border border-line bg-surface py-1 shadow-high"
+              className="absolute top-12 right-0 w-72 overflow-hidden rounded-md border border-line bg-surface py-1 shadow-high"
             >
               <div className="border-b border-line px-4 py-3">
                 <p className="text-sm font-semibold text-ink">{MERCHANT_NAME}</p>
@@ -91,6 +92,7 @@ export function AppHeader() {
                   <span className="text-xs text-ink-muted">{t("header.resetHint")}</span>
                 </span>
               </button>
+              <PushSettings />
             </div>
           )}
         </div>

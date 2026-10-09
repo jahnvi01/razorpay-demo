@@ -72,6 +72,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-58 | Offline mode and auto sync for low network areas | V2 | Should | L | Done |
 | UD-59 | Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels | 6 | Could | S | Done |
 | UD-60 | Market figures: MSMEs, cash-heavy shops, delayed payments, with icons | 6 | Could | S | Done |
+| UD-61 | Merchant push: morning dues digest with Remind all, and payment received | 4 | Should | M | Test |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -168,6 +169,52 @@ No tickets yet.
 No tickets yet.
 
 ## Test
+
+### UD-61 · Merchant push: morning dues digest with Remind all, and payment received
+- Phase: 4
+- Priority: Should
+- Size: M
+- Status: Test
+- Dependencies: UD-49, UD-47, UD-14
+- User story: As a merchant, I want my phone to tell me each morning who to chase, let me remind them in one tap, and tell me when they pay, so I get my udhaar back without remembering to check.
+
+**The loop**
+- Nudged: at 10:00 am IST, one push: "3 customers owe ₹4,265 · 2 are late", with a Remind all button
+- Reminded in one tap: tapping it opens Dues with the overdue filter on and One tap reminders already open, so sending takes about 20 seconds
+- Paid: the customer pays from the SMS or WhatsApp link
+- Told it cleared: a push "Sunita paid ₹500 by UPI · udhaar cleared" (or "₹200 still due"), tapping opens her screen
+
+**Acceptance criteria**
+- Morning digest at 10:00 am IST through the existing daily job. Counts customers who are late or due today and the amount. Skipped when there is nothing to act on
+- Digest has a Remind all action. The notification and the action open Dues with the overdue filter and the One tap reminders sheet open
+- Payment received push for online payments (pay link), sent once per payment, never for cash the merchant records
+- RK menu: Notifications on or off, Send test digest, Send test payment alert
+- Text in the language the merchant had when they turned notifications on. English and Hindi
+- Works on Android Chrome and on iPhone once installed to the home screen. A clear message where push is not supported or was blocked
+- Subscriptions that expire are removed automatically
+
+**Not in scope**
+- First day late, salary week and weekly summary nudges (later)
+- Push for customers. Customers keep getting SMS and WhatsApp
+- Quiet hours settings and per type toggles (the digest is once a day by design)
+
+**Tech**
+- Web Push with VAPID keys through the existing service worker. web-push on the server
+- push_subscriptions table per demo shop: endpoint, keys, language
+- /api/push/subscribe (save, remove) and /api/push/test (to this browser only)
+- Digest added to /api/cron/day-before. Payment push from the online payment path
+
+**Measure**
+- Notification to reminders sent within 1 hour, reminders to payment within 48 hours, share of merchants who turn notifications off
+
+
+**Built and verified (8 Oct 2026)**
+- RK menu: Notifications switch, Send test digest, Send test payment alert. Blocked, unsupported and iPhone "add to Home Screen first" messages
+- Digest goes out from the 10:00 IST cron after the day-before SMS, once per shop, skipped on empty days and on `?date=` test runs
+- Payment push is sent from recordOnlinePayment only when a payment is newly recorded (webhook or sync on open), so never twice and never for cash
+- Remind all opens /app/dues?filter=overdue with One tap reminders open, then drops remind=1 from the address
+- Production check, 12 of 12 through Google's real push service: subscribe, both test pushes accepted and shown ("2 customers to chase today · ₹5,265" with Remind all; "Gurpreet paid ₹500 · ₹2,640 still left"), Remind all landing, Hindi, turn off. App e2e 43 of 43
+- To test: turn it on from the RK menu on your Android phone, or on iPhone after Add to Home Screen, and tap both test buttons
 
 ### UD-49 · One tap reminders: bulk SMS to overdue customers
 - Phase: 4
