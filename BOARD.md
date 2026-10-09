@@ -73,6 +73,10 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-59 | Landing polish: centred hero on phones, simpler tool cards, centred dots, no all caps labels | 6 | Could | S | Done |
 | UD-60 | Market figures: MSMEs, cash-heavy shops, delayed payments, with icons | 6 | Could | S | Done |
 | UD-61 | Merchant push: morning dues digest with Remind all, and payment received | 4 | Should | M | Test |
+| UD-62 | Trust Meter as a score ring (trial, easy rollback) | 4 | Could | S | Done |
+| UD-63 | Customer confirms udhaar (promise to pay) | 5 | Could | S | Backlog |
+| UD-64 | Voice entry: speak udhaar, confirm, save | 5 | Could | M | Backlog |
+| UD-65 | UPI AutoPay on the due date | 5 | Could | L | Backlog |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -158,7 +162,27 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 
 ## Backlog
 
-No tickets yet.
+Proposed 10 Oct 2026, not started. Waiting for the user to choose which to build.
+
+### UD-63 · Customer confirms udhaar (promise to pay)
+- Size: S. Risk: low. "Confirm" button on the customer's statement page (/s/[token]), reached from the SMS link they already get; records time and device; "Confirmed" tick for the merchant; optional OTP later
+
+### UD-64 · Voice entry: speak udhaar, confirm, save
+- Size: M. Risk: medium (misheard amounts). Push to talk on Give udhaar, Hindi, English or Hinglish, speech to text then Claude extracts customer, amount, due date, note into the form; merchant always confirms; works online only
+
+### UD-65 · UPI AutoPay on the due date
+- Size: L. Risk: high (Razorpay must enable recurring payments on the account; customer trust). Customer sets up a UPI AutoPay mandate from the pay page; on the due date the remaining udhaar is debited after the required pre-debit notice; mandate cap and cancel any time
+
+### Idea list (10 Oct 2026, from competitor research, not ticketed)
+- Notebook photo import (Claude vision reads a bahi khata page into customers and balances)
+- Part payments with a promise date (Razorpay pay links accept partial payments)
+- Spoken payment alert in Hindi, soundbox style, while the app is open
+- Safe credit limit per customer from the Trust Meter, warned on Give udhaar
+- Collections forecast for the week
+- Udhaar Advance: cash now against money customers owe (Razorpay Cash Advance style), shown as a labelled demo offer
+- Smart reminder timing and tone per customer
+- Early payment reward
+- Recovery outlook on home: likely to recover vs at risk, from each customer's history and past months' recovery % (proposed 10 Oct, awaiting placement choice)
 
 ## Ready
 
@@ -169,6 +193,7 @@ No tickets yet.
 No tickets yet.
 
 ## Test
+
 
 ### UD-61 · Merchant push: morning dues digest with Remind all, and payment received
 - Phase: 4
@@ -315,6 +340,29 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-62 · Trust Meter as a score ring (trial, easy rollback)
+- Phase: 4
+- Priority: Could
+- Size: S
+- Status: Done
+- Dependencies: UD-23
+- User story: As a merchant, I want the Trust Meter to catch my eye, so I notice a risky customer before giving more udhaar.
+
+**What changed**
+- Ring with the on-time % in the centre, sweeping in when the card opens. The verdict ("Often late") is the heading in the verdict colour, with "3 of 10 paid on time" under it
+- The card is tinted green, amber or red to match. Avg to pay and Oldest unpaid sit in the right column under the verdict (revised 9 Oct: the right side looked empty). "Due now" is dropped because the Total due card already shows it
+- Ring is 96 px with a thinner stroke, so the % has room to breathe
+- Not enough history: grey dashed ring with "?" and the existing hint
+- Same on the customer screen and on Give udhaar. English and Hindi
+
+**Rollback**
+- One line: TRUST_RING_ENABLED = false in lib/features.ts brings back the original bar card (TrustMeterBar, unchanged)
+
+**Landing page and production (9 Oct 2026)**
+- Landing Tools card "Trust Meter" now shows the same ring style: tinted mini cards for Lakshmi (90%, Usually on time) and Farhan (30%, Often late), rings sweep in on a loop, still for reduced motion
+- Deployed. Production: app e2e 43 of 43, landing 26 of 26, ring present on the customer screen and the landing page
+
 
 ### UD-60 · Market figures: MSMEs, cash-heavy shops, delayed payments, with icons
 - Phase: 6

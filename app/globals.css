@@ -169,11 +169,16 @@ body {
 .lp-out2 { animation: lp-k-out2 6s var(--ease-standard) infinite; }
 .lp-grow1 { transform-origin: left; animation: lp-k-grow1 6s var(--ease-standard) infinite; }
 .lp-grow2 { transform-origin: left; animation: lp-k-grow2 6s var(--ease-standard) infinite; }
+/* UD-62 Trust ring sweep: the circle uses pathLength 100, --off is 100 minus the on-time % */
+@keyframes lp-k-ring1 { 0%, 8% { stroke-dashoffset: 100; } 30%, 92% { stroke-dashoffset: var(--off); } 100% { stroke-dashoffset: 100; } }
+@keyframes lp-k-ring2 { 0%, 36% { stroke-dashoffset: 100; } 58%, 92% { stroke-dashoffset: var(--off); } 100% { stroke-dashoffset: 100; } }
+.lp-ring1 { stroke-dashoffset: var(--off); animation: lp-k-ring1 6s var(--ease-standard) infinite; }
+.lp-ring2 { stroke-dashoffset: var(--off); animation: lp-k-ring2 6s var(--ease-standard) infinite; }
 .lp-cursor { animation: lp-k-cursor 6s var(--ease-standard) infinite; }
 .lp-ripple { opacity: 0; animation: lp-k-ripple 6s ease-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-in1, .lp-in2, .lp-in3, .lp-grow1, .lp-grow2 { animation: none !important; }
+  .lp-in1, .lp-in2, .lp-in3, .lp-grow1, .lp-grow2, .lp-ring1, .lp-ring2 { animation: none !important; }
   .lp-out2, .lp-cursor, .lp-ripple { display: none; }
   .sheet-up, .sheet-fade, .lp-clock { animation: none !important; }
   .lp-fade-up, .lp-rise, .lp-pop, .lp-fill, .lp-float, .lp-tap, .lp-marquee { animation: none !important; }

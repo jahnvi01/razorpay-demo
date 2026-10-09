@@ -221,47 +221,86 @@ function Swap({ before, after }: { before: ReactNode; after: ReactNode }) {
   );
 }
 
+/** UD-62 Same look as the app's Trust Meter: score ring, verdict and tinted card. */
 function TrustDemo({ t }: { t: Translate }) {
   const rows = [
     {
       name: "Lakshmi Iyer",
-      width: "w-[90%]",
-      bar: "bg-positive-intense",
-      grow: "lp-grow1",
+      rate: 90,
+      onTime: 9,
+      cleared: 10,
+      ring: "lp-ring1",
       show: "lp-in1",
-      tone: "positive" as const,
+      color: "text-positive-intense",
+      verdict: "text-positive",
+      tint: "bg-positive-subtle",
       label: t("trust.usually"),
-      rate: t("trust.onTimeValue", { rate: 90, onTime: 9, cleared: 10 }),
     },
     {
       name: "Farhan Qureshi",
-      width: "w-[40%]",
-      bar: "bg-negative",
-      grow: "lp-grow2",
+      rate: 30,
+      onTime: 3,
+      cleared: 10,
+      ring: "lp-ring2",
       show: "lp-in2",
-      tone: "negative" as const,
+      color: "text-negative",
+      verdict: "text-negative",
+      tint: "bg-negative-subtle",
       label: t("trust.often"),
-      rate: t("trust.onTimeValue", { rate: 40, onTime: 2, cleared: 5 }),
     },
   ];
   return (
     <div className="space-y-3">
       {rows.map((r) => (
-        <div key={r.name} className="rounded-lg bg-white p-3.5 shadow-low">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-ink">{r.name}</p>
-            <span className={r.show}>
-              <Badge tone={r.tone}>{r.label}</Badge>
-            </span>
+        <div
+          key={r.name}
+          className="overflow-hidden rounded-lg bg-white shadow-low"
+        >
+          <div className={`flex items-center gap-4 p-3.5 ${r.tint}`}>
+            <div className={`relative h-16 w-16 shrink-0 ${r.color}`}>
+              <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeOpacity="0.15"
+                  strokeWidth="5"
+                />
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  pathLength={100}
+                  strokeDasharray="100"
+                  className={r.ring}
+                  style={{ "--off": 100 - r.rate } as CSSProperties}
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center font-heading text-base font-semibold">
+                {r.rate}%
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-ink-subtle">{r.name}</p>
+              <p
+                className={`${r.show} font-heading text-base leading-6 font-semibold ${r.verdict}`}
+              >
+                {r.label}
+              </p>
+              <p className={`${r.show} text-xs text-ink-muted`}>
+                {t("trust.paidOnTime", {
+                  onTime: r.onTime,
+                  cleared: r.cleared,
+                })}
+              </p>
+            </div>
           </div>
-          <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-gray-faded">
-            <div
-              className={`${r.grow} h-full rounded-full ${r.width} ${r.bar}`}
-            />
-          </div>
-          <p className={`${r.show} mt-1.5 text-xs text-ink-muted`}>
-            {t("trust.onTime")} · {r.rate}
-          </p>
         </div>
       ))}
     </div>
@@ -442,7 +481,8 @@ function OfflineDemo({ t }: { t: Translate }) {
     <Swap
       before={
         <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-gray-faded px-3 text-xs font-semibold text-ink-subtle">
-          <span className="h-2 w-2 rounded-full bg-ink-muted" /> {t("lp.t5.offline")}
+          <span className="h-2 w-2 rounded-full bg-ink-muted" />{" "}
+          {t("lp.t5.offline")}
         </span>
       }
       after={
@@ -453,7 +493,9 @@ function OfflineDemo({ t }: { t: Translate }) {
     />
   );
   const row = (name: string, label: string, show: string) => (
-    <div className={`${show} flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-low`}>
+    <div
+      className={`${show} flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-low`}
+    >
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-ink">{name}</p>
         <p className="text-xs text-ink-muted">{label}</p>
@@ -475,8 +517,16 @@ function OfflineDemo({ t }: { t: Translate }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">{status}</div>
-      {row("Sunita Sharma", t("offline.pendingUdhaar", { amount: "₹500" }), "lp-in1")}
-      {row("Arjun Mehta", t("offline.pendingCash", { amount: "₹300" }), "lp-in1")}
+      {row(
+        "Sunita Sharma",
+        t("offline.pendingUdhaar", { amount: "₹500" }),
+        "lp-in1",
+      )}
+      {row(
+        "Arjun Mehta",
+        t("offline.pendingCash", { amount: "₹300" }),
+        "lp-in1",
+      )}
     </div>
   );
 }
