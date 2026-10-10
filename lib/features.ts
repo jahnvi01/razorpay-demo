@@ -10,3 +10,6 @@ export const SHOP_QR_ENABLED = false;
  * progress bar card (TrustMeterBar), which is kept unchanged.
  */
 export const TRUST_RING_ENABLED = true;
+
+/** Recovery Forecast card at the bottom of home (UD-66, trial 10 Oct 2026). false hides it. */
+export const RECOVERY_FORECAST_ENABLED = true;

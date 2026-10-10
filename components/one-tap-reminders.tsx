@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { bulkSmsAction } from "@/app/app/share-actions";
 import { useI18n } from "./i18n-provider";
 import { BellIcon, CheckCircleIcon } from "./icons";
@@ -20,8 +26,14 @@ export type ReminderTarget = {
  */
 export function OneTapReminders({
   customers,
+  trigger,
+  sub,
 }: {
   customers: ReminderTarget[];
+  /** UD-66 Renders this instead of the floating pill (Recovery Forecast's Remind buttons). */
+  trigger?: (open: () => void) => ReactNode;
+  /** Line under the sheet title. Defaults to the overdue wording. */
+  sub?: string;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -48,12 +60,15 @@ export function OneTapReminders({
   // UD-61 The morning digest's Remind all lands on ?remind=1: open the sheet straight away, once
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (url.searchParams.get("remind") !== "1") return;
+    if (trigger || url.searchParams.get("remind") !== "1") return;
     url.searchParams.delete("remind");
     show(); // eslint-disable-line react-hooks/set-state-in-effect
     // Once hydration is done, and with null state, so the Next router adopts the new URL instead of
     // putting remind=1 back
-    const id = setTimeout(() => window.history.replaceState(null, "", url.pathname + url.search), 50);
+    const id = setTimeout(
+      () => window.history.replaceState(null, "", url.pathname + url.search),
+      50,
+    );
     return () => clearTimeout(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -97,21 +112,29 @@ export function OneTapReminders({
 
   return (
     <>
-      {/* Floating pill above the bottom nav, inside the app column */}
-      <div
-        className="pointer-events-none fixed inset-x-0 z-10 mx-auto flex max-w-md justify-end px-4"
-        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom) + 16px)" }} // clear of the tab bar and the iPhone home indicator
-      >
-        <button
-          type="button"
-          onClick={show}
-          aria-haspopup="dialog"
-          className="pointer-events-auto flex h-11 items-center gap-2 rounded-full bg-[#FFE8C2] px-5 text-[15px] font-semibold text-ink shadow-high ring-1 ring-[#F5C77E] transition-colors duration-200 ease-standard hover:bg-[#FFDDA3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          <BellIcon size={18} />
-          {t("bulk.button")}
-        </button>
-      </div>
+      {trigger ? (
+        trigger(show)
+      ) : (
+        <>
+          {/* Floating pill above the bottom nav, inside the app column */}
+          <div
+            className="pointer-events-none fixed inset-x-0 z-10 mx-auto flex max-w-md justify-end px-4"
+            style={{
+              bottom: "calc(4rem + env(safe-area-inset-bottom) + 16px)",
+            }} // clear of the tab bar and the iPhone home indicator
+          >
+            <button
+              type="button"
+              onClick={show}
+              aria-haspopup="dialog"
+              className="pointer-events-auto flex h-11 items-center gap-2 rounded-full bg-[#FFE8C2] px-5 text-[15px] font-semibold text-ink shadow-high ring-1 ring-[#F5C77E] transition-colors duration-200 ease-standard hover:bg-[#FFDDA3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <BellIcon size={18} />
+              {t("bulk.button")}
+            </button>
+          </div>
+        </>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-40 flex items-end justify-center">
@@ -138,7 +161,9 @@ export function OneTapReminders({
               >
                 {t("bulk.title")}
               </h2>
-              <p className="mt-1 text-sm text-ink-subtle">{t("bulk.sub")}</p>
+              <p className="mt-1 text-sm text-ink-subtle">
+                {sub ?? t("bulk.sub")}
+              </p>
 
               {results ? (
                 <div className="mt-5 space-y-3" role="status">
@@ -186,9 +211,11 @@ export function OneTapReminders({
                           </span>
                           <span className="flex shrink-0 flex-col items-end gap-1">
                             <Amount paise={c.duePaise} size="sm" />
-                            <Badge tone="negative">
-                              {t("overdue.daysLate", { days: c.daysLate })}
-                            </Badge>
+                            {c.daysLate > 0 && (
+                              <Badge tone="negative">
+                                {t("overdue.daysLate", { days: c.daysLate })}
+                              </Badge>
+                            )}
                           </span>
                         </label>
                       </li>

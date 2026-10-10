@@ -4,10 +4,12 @@ import { ChevronRightIcon, PlusIcon } from "@/components/icons";
 import { countPendingQr } from "@/lib/payments/qr";
 import { Amount, Card, SectionHeader } from "@/components/ui";
 import { PeriodPicker } from "@/components/period-picker";
+import { RecoveryForecast } from "@/components/recovery-forecast";
 import { WelcomeSheet } from "@/components/welcome-sheet";
 import { todayIST } from "@/lib/dates";
 import { parsePeriod } from "@/lib/period";
-import { SHOP_QR_ENABLED } from "@/lib/features";
+import { RECOVERY_FORECAST_ENABLED, SHOP_QR_ENABLED } from "@/lib/features";
+import { getForecast } from "@/lib/data/forecast";
 import { listCustomers } from "@/lib/data/customers";
 import { getHomeSummary } from "@/lib/data/ledger";
 import { getT } from "@/lib/i18n/server";
@@ -15,17 +17,18 @@ import { requireSandbox } from "@/lib/sandbox/server";
 
 /**
  * UD-11 Home summary, for this month by default. UD-46 The period can be last month or a custom range.
- * UD-42 The welcome sheet opens here on a first visit.
+ * UD-42 The welcome sheet opens here on a first visit. UD-66 Recovery Forecast at the bottom.
  */
 export default async function HomePage({ searchParams }: PageProps<"/app">) {
   const [sandboxId, query] = await Promise.all([requireSandbox(), searchParams]);
   const today = todayIST();
   const period = parsePeriod(query, today);
-  const [t, summary, pendingQr, customers] = await Promise.all([
+  const [t, summary, pendingQr, customers, forecast] = await Promise.all([
     getT(),
     getHomeSummary(sandboxId, period),
     SHOP_QR_ENABLED ? countPendingQr(sandboxId) : 0,
     listCustomers(sandboxId),
+    RECOVERY_FORECAST_ENABLED ? getForecast(sandboxId) : null,
   ]);
 
   return (
@@ -86,6 +89,7 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
           {t("qr.open")}
         </ButtonLink>
       )}
+      {forecast && forecast.customers > 0 && <RecoveryForecast forecast={forecast} />}
     </div>
   );
 }

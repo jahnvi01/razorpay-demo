@@ -77,6 +77,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-63 | Customer confirms udhaar (promise to pay) | 5 | Could | S | Backlog |
 | UD-64 | Voice entry: speak udhaar, confirm, save | 5 | Could | M | Backlog |
 | UD-65 | UPI AutoPay on the due date | 5 | Could | L | Backlog |
+| UD-66 | Recovery Forecast on home | 5 | Should | M | Test |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -182,7 +183,7 @@ Proposed 10 Oct 2026, not started. Waiting for the user to choose which to build
 - Udhaar Advance: cash now against money customers owe (Razorpay Cash Advance style), shown as a labelled demo offer
 - Smart reminder timing and tone per customer
 - Early payment reward
-- Recovery outlook on home: likely to recover vs at risk, from each customer's history and past months' recovery % (proposed 10 Oct, awaiting placement choice)
+- Recovery Forecast: now UD-66 (Test)
 
 ## Ready
 
@@ -193,6 +194,31 @@ No tickets yet.
 No tickets yet.
 
 ## Test
+
+### UD-66 · Recovery Forecast on home
+- Phase: 5
+- Priority: Should
+- Size: M
+- Status: Test (local only, not deployed)
+- Dependencies: UD-23, UD-47, UD-49
+- User story: As a merchant, I want to see who will likely pay on time, who will be late and whose money is at risk, so I know where to act and how much will come back this month.
+
+**Design**: option A, at the bottom of home under Give udhaar. English and Hindi. Revised 10 Oct: its own section (trending-up icon tile, title, month), then a hero panel with Expected back this month, the amount and an animated % ring, then the three-colour bar and group details
+
+**What it shows**
+- "₹10,835 due from 5 customers", a three-colour bar, then three groups with first names, reason and amount: On time (green), Likely late (orange), At risk (red). Empty groups are hidden
+- Likely late: "Remind before due" opens One tap reminders with those customers ticked (sheet line: SMS the pay link before the due date). At risk: "Remind now" opens it with the at-risk customers. Rows open Dues (At risk with the overdue filter)
+- Expected back this month (rounded to ₹100) and % of dues. "How we estimate" expands a one-line explanation with the shop's recovery %
+
+**Rules** (lib/data/forecast.ts)
+- At risk: 30+ days late, or 7+ days late and often late. Likely late: late now, or usually sometimes or often late. On time: the rest
+- Shop recovery %: of udhaar that fell due in the last 90 days, the share paid back
+- Chance per customer: average of shop recovery % and the customer's on-time rate, times 1 (on time), 0.85 (likely late) or 0.5 (at risk)
+- Demo today: On time Sunita, Lakshmi ₹3,260 · Likely late Gurpreet (12 days late but always paid on time before), Arjun ₹4,950 · At risk Farhan ₹2,625 · expected ₹7,600 (70%)
+
+**Checks**: 11 of 11 local forecast checks (groups, actions open the right customers, not under the bottom nav, Hindi, 360 px), app e2e 43 of 43
+
+**Rollback**: RECOVERY_FORECAST_ENABLED = false in lib/features.ts hides it
 
 
 ### UD-61 · Merchant push: morning dues digest with Remind all, and payment received
