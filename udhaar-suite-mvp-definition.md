@@ -1,6 +1,6 @@
 # Udhaar Suite — MVP Definition
 
-Sep 29, 2026 · Krutarth Darji
+Sep 29, 2026
 
 ## Summary
 
