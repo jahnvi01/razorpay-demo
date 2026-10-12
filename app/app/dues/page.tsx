@@ -4,6 +4,8 @@ import { RemindButton } from "@/components/remind-button";
 import { BellIcon, CheckIcon, ChevronRightIcon, MessageSquareIcon, WhatsAppIcon } from "@/components/icons";
 import { Amount, Badge, Card } from "@/components/ui";
 import { listDues, type DuesSort } from "@/lib/data/dues";
+import { parsePeriod, periodBounds } from "@/lib/period";
+import { periodName, periodQuery } from "@/lib/period-label";
 import { dateInIST, todayIST } from "@/lib/dates";
 import { formatDate, formatRupees } from "@/lib/format";
 import { getLang, getT } from "@/lib/i18n/server";
@@ -12,13 +14,16 @@ import { requireSandbox } from "@/lib/sandbox/server";
 /**
  * UD-47 Dues: everyone who still owes udhaar, with a one-tap reminder per row (replaces Overdue, UD-24).
  * ?sort=amount (default) or recent, and ?filter=overdue. The overdue chip in the strip toggles the filter.
+ * UD-67 ?period=last or ?from=&to= (from home's Remaining) keeps only udhaar given in that period.
  */
 export default async function DuesPage({ searchParams }: PageProps<"/app/dues">) {
   const [query, t, lang, sandboxId] = await Promise.all([searchParams, getT(), getLang(), requireSandbox()]);
   const sort: DuesSort = query.sort === "recent" ? "recent" : "amount";
   const overdueOnly = query.filter === "overdue";
 
-  const all = await listDues(sandboxId, { sort, overdueOnly: false });
+  const scoped = query.period === "last" || (typeof query.from === "string" && typeof query.to === "string");
+  const period = scoped ? parsePeriod(query) : null;
+  const all = await listDues(sandboxId, { sort, overdueOnly: false, created: period ? periodBounds(period) : undefined });
   const overdue = all.filter((c) => c.overduePaise > 0);
   const shown = overdueOnly ? overdue : all;
   const totalDue = all.reduce((s, c) => s + c.duePaise, 0);
@@ -41,7 +46,7 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
     const f = next.overdueOnly ?? overdueOnly;
     if (s !== "amount") p.set("sort", s);
     if (f) p.set("filter", "overdue");
-    const qs = p.toString();
+    const qs = [p.toString(), period ? periodQuery(period) : ""].filter(Boolean).join("&");
     return `/app/dues${qs ? `?${qs}` : ""}`;
   };
 
@@ -57,6 +62,14 @@ export default async function DuesPage({ searchParams }: PageProps<"/app/dues">)
         </h2>
         {all.length > 0 && <span className="text-sm text-ink-muted">· {t("customers.count", { count: all.length })}</span>}
       </div>
+      {period && (
+        <div className="flex items-center justify-between gap-3 rounded-md bg-primary-faded px-3 py-2 text-sm">
+          <span className="font-semibold text-primary">{t("dues.fromPeriod", { period: periodName(period, lang) })}</span>
+          <Link href="/app/dues" className="shrink-0 text-xs font-semibold text-primary underline-offset-2 hover:underline">
+            {t("dues.clearPeriod")}
+          </Link>
+        </div>
+      )}
       {all.length === 0 ? (
         <Card className="p-4 text-sm text-ink-subtle">{t("dues.none")}</Card>
       ) : (

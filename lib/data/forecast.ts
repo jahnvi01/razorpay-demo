@@ -1,8 +1,9 @@
 import "server-only";
 import { addDays, todayIST } from "@/lib/dates";
+import { periodBounds, type Period } from "@/lib/period";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { TrustLabel } from "@/lib/trust";
-import { listDues } from "./dues";
+import { listDues, type DueCustomer } from "./dues";
 import { getTrustByCustomer } from "./trust";
 
 // UD-66 Recovery Forecast: who is likely to pay on time, late, or not this month, and how much is
@@ -80,4 +81,31 @@ export async function getForecast(sandboxId: string): Promise<Forecast> {
   const totalPaise = dues.reduce((s, c) => s + c.duePaise, 0);
   // Round to the nearest ₹100: it is an estimate, and exact paise would suggest false precision
   return { totalPaise, customers: dues.length, groups, expectedPaise: Math.round(expected / 10000) * 10000, shopRate };
+}
+
+export type Recap = {
+  givenPaise: number;
+  backPaise: number;
+  unpaidPaise: number;
+  /** Customers still owing on udhaar from this period, most owed first. */
+  owing: DueCustomer[];
+};
+
+/** UD-67 Recovery recap for a past or custom period: how much of the udhaar given in it came back. */
+export async function getRecap(sandboxId: string, period: Period): Promise<Recap> {
+  const bounds = periodBounds(period);
+  const [{ data, error }, owing] = await Promise.all([
+    supabaseAdmin()
+      .from("credit_entries")
+      .select("amount_paise, remaining_paise")
+      .eq("sandbox_id", sandboxId)
+      .gte("created_at", bounds.from)
+      .lt("created_at", bounds.to),
+    listDues(sandboxId, { sort: "amount", overdueOnly: false, created: bounds }),
+  ]);
+  if (error) throw new Error(`recap: ${error.message}`);
+  const rows = (data ?? []) as { amount_paise: number; remaining_paise: number }[];
+  const givenPaise = rows.reduce((s, r) => s + Number(r.amount_paise), 0);
+  const unpaidPaise = rows.reduce((s, r) => s + Number(r.remaining_paise), 0);
+  return { givenPaise, backPaise: givenPaise - unpaidPaise, unpaidPaise, owing };
 }

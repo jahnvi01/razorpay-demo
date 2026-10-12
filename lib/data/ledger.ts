@@ -90,13 +90,32 @@ export async function getHomeSummary(sandboxId: string, period: Period = parsePe
     p_to: bounds.to,
   });
   const r = rows[0];
-  return {
+  const summary = {
     givenPaise: Number(r.given_paise),
     givenEntries: Number(r.given_entries),
     collectedPaise: Number(r.collected_paise),
     remainingPaise: Number(r.remaining_paise),
     customersOwing: Number(r.customers_owing),
     overdueCustomers: Number(r.overdue_customers),
+  };
+  if (period.kind === "month") return summary;
+
+  // UD-67 A past or custom period: Remaining is what is still unpaid from udhaar given in it
+  const { data, error } = await supabaseAdmin()
+    .from("credit_entries")
+    .select("customer_id, remaining_paise, due_date")
+    .eq("sandbox_id", sandboxId)
+    .eq("status", "open")
+    .gte("created_at", bounds.from)
+    .lt("created_at", bounds.to);
+  if (error) throw new Error(`home summary: ${error.message}`);
+  const open = (data ?? []) as { customer_id: string; remaining_paise: number; due_date: string }[];
+  const today = todayIST();
+  return {
+    ...summary,
+    remainingPaise: open.reduce((s, e) => s + Number(e.remaining_paise), 0),
+    customersOwing: new Set(open.map((e) => e.customer_id)).size,
+    overdueCustomers: new Set(open.filter((e) => e.due_date < today).map((e) => e.customer_id)).size,
   };
 }
 

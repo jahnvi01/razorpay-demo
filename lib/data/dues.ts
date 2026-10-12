@@ -29,7 +29,16 @@ const REMINDER_KINDS = new Set(["manual", "day_before"]);
  * UD-47 Everyone who still owes udhaar (replaces the overdue-only list from UD-24).
  * Sort by amount due (default) or most recent udhaar. `overdueOnly` keeps customers with late udhaar.
  */
-export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdueOnly: boolean }): Promise<DueCustomer[]> {
+export async function listDues(
+  sandboxId: string,
+  opts: { sort: DuesSort; overdueOnly: boolean; /** UD-67 Only udhaar given in this instant range (periodBounds). */ created?: { from: string; to: string } },
+): Promise<DueCustomer[]> {
+  const from = opts.created ? Date.parse(opts.created.from) : -Infinity;
+  const to = opts.created ? Date.parse(opts.created.to) : Infinity;
+  const inRange = (createdAt: string) => {
+    const at = Date.parse(createdAt);
+    return at >= from && at < to;
+  };
   const today = todayIST();
   const { data, error } = await supabaseAdmin()
     .from("customers")
@@ -47,7 +56,7 @@ export async function listDues(sandboxId: string, opts: { sort: DuesSort; overdu
 
   const list = rows
     .map((c): DueCustomer | null => {
-      const open = c.credit_entries.filter((e) => e.status === "open" && Number(e.remaining_paise) > 0);
+      const open = c.credit_entries.filter((e) => e.status === "open" && Number(e.remaining_paise) > 0 && inRange(e.created_at));
       if (open.length === 0) return null;
       const late = open.filter((e) => e.due_date < today);
       const upcoming = open.filter((e) => e.due_date >= today).map((e) => e.due_date).sort();

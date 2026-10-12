@@ -5,14 +5,16 @@ import { countPendingQr } from "@/lib/payments/qr";
 import { Amount, Card, SectionHeader } from "@/components/ui";
 import { PeriodPicker } from "@/components/period-picker";
 import { RecoveryForecast } from "@/components/recovery-forecast";
+import { RecoveryRecap } from "@/components/recovery-recap";
 import { WelcomeSheet } from "@/components/welcome-sheet";
 import { todayIST } from "@/lib/dates";
 import { parsePeriod } from "@/lib/period";
 import { RECOVERY_FORECAST_ENABLED, SHOP_QR_ENABLED } from "@/lib/features";
-import { getForecast } from "@/lib/data/forecast";
+import { getForecast, getRecap } from "@/lib/data/forecast";
+import { periodName, periodQuery } from "@/lib/period-label";
 import { listCustomers } from "@/lib/data/customers";
 import { getHomeSummary } from "@/lib/data/ledger";
-import { getT } from "@/lib/i18n/server";
+import { getLang, getT } from "@/lib/i18n/server";
 import { requireSandbox } from "@/lib/sandbox/server";
 
 /**
@@ -23,13 +25,18 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
   const [sandboxId, query] = await Promise.all([requireSandbox(), searchParams]);
   const today = todayIST();
   const period = parsePeriod(query, today);
-  const [t, summary, pendingQr, customers, forecast] = await Promise.all([
+  const past = period.kind !== "month";
+  const [t, lang, summary, pendingQr, customers, forecast, recap] = await Promise.all([
     getT(),
+    getLang(),
     getHomeSummary(sandboxId, period),
     SHOP_QR_ENABLED ? countPendingQr(sandboxId) : 0,
     listCustomers(sandboxId),
-    RECOVERY_FORECAST_ENABLED ? getForecast(sandboxId) : null,
+    RECOVERY_FORECAST_ENABLED && !past ? getForecast(sandboxId) : null,
+    RECOVERY_FORECAST_ENABLED && past ? getRecap(sandboxId, period) : null,
   ]);
+  // UD-67 Remaining follows the period, so its link opens Dues for the same period
+  const duesHref = past ? `/app/dues?${periodQuery(period)}` : "/app/dues";
 
   return (
     <div className="space-y-4">
@@ -65,7 +72,7 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
             <Amount paise={summary.collectedPaise} size="md" />
           </div>
         </Card>
-        <Link href="/app/dues" className="block rounded-lg transition-shadow duration-200 ease-standard hover:shadow-high">
+        <Link href={duesHref} className="block rounded-lg transition-shadow duration-200 ease-standard hover:shadow-high">
           <Card className="h-full p-4">
             <p className="flex items-center justify-between text-sm font-semibold text-ink-subtle">
               {t("home.remaining")}
@@ -90,6 +97,7 @@ export default async function HomePage({ searchParams }: PageProps<"/app">) {
         </ButtonLink>
       )}
       {forecast && forecast.customers > 0 && <RecoveryForecast forecast={forecast} />}
+      {recap && <RecoveryRecap recap={recap} periodName={periodName(period, lang)} />}
     </div>
   );
 }

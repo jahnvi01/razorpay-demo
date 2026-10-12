@@ -78,6 +78,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-64 | Voice entry: speak udhaar, confirm, save | 5 | Could | M | Backlog |
 | UD-65 | UPI AutoPay on the due date | 5 | Could | L | Backlog |
 | UD-66 | Recovery Forecast on home | 5 | Should | M | Done |
+| UD-67 | Bug: past periods on home showed today's Remaining and forecast | 5 | Must | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
 | UD-31 | Automatic WhatsApp messages via Business API | V2 | Could | L | Parking lot |
@@ -341,6 +342,21 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-67 · Bug: past periods on home showed today's Remaining and forecast
+- Phase: 5
+- Priority: Must
+- Size: S
+- Status: Done (12 Oct 2026)
+- Reported: picking Last month changed Given and Collected, but Remaining, its overdue count, the Dues it opened and the Recovery Forecast stayed on today's numbers
+
+**Fix (user's choices)**
+- Remaining for a past or custom period = still unpaid from udhaar given in that period, with its overdue count (lib/data/ledger.ts). This month is unchanged: everything owed
+- Tapping it opens Dues for that period (?period=last or ?from=&to=), with an "Udhaar from September" banner and Show all dues; sort and the Overdue chip keep the period
+- Recovery Forecast is replaced by a Recovery recap for that period: came back amount and % ring, of the amount given, still-unpaid customers with days late, and Remind N customers (components/recovery-recap.tsx, getRecap in lib/data/forecast.ts)
+- English and Hindi
+
+**Checks**: production 10 of 10 period checks (September: Remaining ₹2,090, 2 overdue, recap 84% back, Dues total matches), app e2e 43 of 43, forecast checks 11 of 11
 
 ### UD-66 · Recovery Forecast on home
 - Phase: 5
