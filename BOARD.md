@@ -78,6 +78,7 @@ Source: udhaar-suite-build-roadmap.md, with these changes applied.
 | UD-64 | Voice entry: speak udhaar, confirm, save | 5 | Could | M | Backlog |
 | UD-65 | UPI AutoPay on the due date | 5 | Could | L | Backlog |
 | UD-66 | Recovery Forecast on home | 5 | Should | M | Done |
+| UD-68 | Demo month: ₹12,010 given, ₹5,775 collected on any date | 5 | Should | S | Done |
 | UD-67 | Bug: past periods on home showed today's Remaining and forecast | 5 | Must | S | Done |
 | UD-29 | Offline entry and sync | V2 | Could | L | Parking lot |
 | UD-30 | Import customer from phone contacts | V2 | Could | S | Parking lot |
@@ -342,6 +343,16 @@ No tickets yet.
 - Notes: tests/e2e/journey.mjs (`npm run test:journey`). On production (2026-10-01) 3 English and 3 Hindi journeys passed in a row (14 of 14 steps each) plus a Slow 3G and 4x CPU run. Cold Slow 3G: first paint 4.7 s, usable in about 13 s, later screens about 3 s. Fast 4G: 0.9 s. Demo customers by default, so no SMS. --with-sms --sms-to sends real SMS. Link payments use signed webhooks because Razorpay checkout cannot be automated reliably. Waiting on the human pilot in PILOT.md (5 merchants, which also covers the UD-08 10 second check)
 
 ## Done
+
+### UD-68 · Demo month: ₹12,010 given, ₹5,775 collected on any date
+- Phase: 5
+- Priority: Should
+- Size: S
+- Status: Done
+- Why: after a reset, this month's given and collected kept changing with the date (₹8,265 on 8 Oct, ₹9,635 on 13 Oct) because older history counted back from today
+- What changed (lib/seed/demo-seed.ts): older history is anchored before the 1st of the month; this month's entries stay in the month; the three payments made today (₹2,030) stay in the month. Two repaid udhaar added this month: Sunita ₹1,860 (Puja samagri) and Arjun ₹1,885 (Office pantry)
+- Result on any date: ₹12,010 given, ₹5,775 collected, ₹9,835 remaining (unchanged), 2 overdue. Trust: Sunita 10 of 11 (91%), Arjun 4 of 6 (67%), others unchanged. Gurpreet's open entry moved from 19 to 12 days old, so he stays Likely late longer
+- Checks: seed unit test now checks the totals and oldest-first on 6 dates (Sep 30 to Oct 31); unit 15 of 15. Deployed, live demo reset, home shows the new numbers, app e2e on production
 
 ### UD-67 · Bug: past periods on home showed today's Remaining and forecast
 - Phase: 5
