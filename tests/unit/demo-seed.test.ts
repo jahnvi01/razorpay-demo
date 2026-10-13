@@ -83,8 +83,8 @@ describe("demo seed", () => {
   });
 
   it("hits the designed on-time rates for the Trust Meter", () => {
-    expect(onTimeStats(byName("Sunita Sharma"))).toEqual({ cleared: 10, onTime: 9 }); // 90%
-    expect(onTimeStats(byName("Arjun Mehta"))).toEqual({ cleared: 5, onTime: 3 }); // 60%
+    expect(onTimeStats(byName("Sunita Sharma"))).toEqual({ cleared: 11, onTime: 10 }); // 91%
+    expect(onTimeStats(byName("Arjun Mehta"))).toEqual({ cleared: 6, onTime: 4 }); // 67%
     expect(onTimeStats(byName("Farhan Qureshi"))).toEqual({ cleared: 10, onTime: 3 }); // 30%
     expect(onTimeStats(byName("Lakshmi Iyer")).cleared).toBeLessThan(3); // not enough history
   });
@@ -101,14 +101,25 @@ describe("demo seed", () => {
     expect(farhan.filter((r) => r > 0)).toEqual([34000, 75000, 103500]); // one part-paid, two untouched
   });
 
-  it("puts about ₹8,000 given and ₹2,000 collected in the current month, even on the 1st (UD-46)", () => {
-    for (const day of [TODAY, "2026-10-01", "2026-10-03", "2026-10-28"]) {
+  it("shows the same month on any date: ₹12,010 given, ₹5,775 collected, ₹9,835 remaining (UD-68)", () => {
+    for (const day of [TODAY, "2026-10-01", "2026-10-03", "2026-10-13", "2026-10-28", "2026-10-31"]) {
       const s = buildDemoSeed(day);
       const month = day.slice(0, 7);
       const given = s.customers.flatMap((c) => c.entries).filter((e) => dateInIST(e.created_at).startsWith(month));
       const collected = s.customers.flatMap((c) => c.payments).filter((p) => dateInIST(p.received_at).startsWith(month));
-      expect(given.reduce((n, e) => n + e.amount_paise, 0), day).toBeGreaterThanOrEqual(800000);
-      expect(collected.reduce((n, p) => n + p.amount_paise, 0), day).toBeGreaterThanOrEqual(200000);
+      expect(given.reduce((n, e) => n + e.amount_paise, 0), day).toBe(1201000);
+      expect(collected.reduce((n, p) => n + p.amount_paise, 0), day).toBe(577500);
+      const remaining = s.customers.flatMap((c) => replayOldestFirst(c).remaining).reduce((n, r) => n + r, 0);
+      expect(remaining, day).toBe(983500);
+      for (const c of s.customers) {
+        const declared = c.payments.flatMap((p, payment) => p.allocations.map((a) => ({ payment, entry: a.entry, amount: a.amount_paise })));
+        expect(replayOldestFirst(c).allocations, `${c.name} ${day}`).toEqual(declared); // oldest-first on every day
+        for (const p of c.payments) {
+          expect(dateInIST(p.received_at) <= day, `${c.name} ${day} future payment`).toBe(true);
+          for (const a of p.allocations) expect(Date.parse(p.received_at)).toBeGreaterThan(Date.parse(c.entries[a.entry].created_at));
+        }
+        expect(dateInIST(c.created_at) < dateInIST(c.entries[0].created_at)).toBe(true);
+      }
     }
   });
 

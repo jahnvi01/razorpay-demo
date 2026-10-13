@@ -5,15 +5,16 @@
 // to their oldest open entry first, so only the newest entries are ever still open.
 //
 // Designed on-time rates (entries cleared on or before their due date / cleared entries):
-//   Sunita Sharma   9 of 10  = 90%  usually on time
-//   Arjun Mehta     3 of 5   = 60%  sometimes late
+//   Sunita Sharma  10 of 11  = 91%  usually on time
+//   Arjun Mehta     4 of 6   = 67%  sometimes late
 //   Farhan Qureshi  3 of 10  = 30%  often late, two open entries past due
 //   Lakshmi Iyer    2 of 2          not enough history (fewer than 3 cleared)
 //   Gurpreet Singh  4 of 4  = 100%  one entry cleared in two part payments, one open entry past due
 //
-// This month (UD-46): entries marked `recent` always land in the current month, even on the 1st,
-// so the home screen shows ₹8,265 given and ₹2,030 collected this month, while older
-// overdue udhaar from last month keeps Remaining higher.
+// This month (UD-46, UD-68): entries marked `recent` always land in the current month, even on the
+// 1st, and everything else is anchored before the 1st (its days ago count back from the end of last
+// month), so a fresh demo shows the same month on any date: ₹12,010 given, ₹5,775 collected and
+// ₹9,835 remaining. Parts marked `thisMonth` are payments made today, against older udhaar.
 
 import { addDays, atIST, todayIST, type IsoDate } from "../dates.ts";
 import { SHOP_QR_ENABLED } from "../features.ts";
@@ -49,8 +50,8 @@ type EntrySpec = {
   note?: string;
   /** Paid in full this many days after the due date (negative = early). Omit for open entries. */
   paidAfterDue?: number;
-  /** Paid in parts: each part in rupees and days before today. */
-  parts?: { rupees: number; ago: number }[];
+  /** Paid in parts: each part in rupees and days before today. `thisMonth` keeps it in the current month. */
+  parts?: { rupees: number; ago: number; thisMonth?: boolean }[];
   /** Keep this entry (and its parts) inside the current month: days ago are capped at the 1st. */
   recent?: boolean;
 };
@@ -80,6 +81,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 760, createdAgo: 37, term: 7, paidAfterDue: 0 },
       { rupees: 1500, createdAgo: 28, term: 7, paidAfterDue: -1 },
       { rupees: 820, createdAgo: 19, term: 7, paidAfterDue: -2 },
+      { rupees: 1860, createdAgo: 9, term: 7, paidAfterDue: -1, recent: true, note: "Puja samagri" },
       { rupees: 1485, createdAgo: 2, term: 10, recent: true, note: "Festival shopping" },
       { rupees: 1200, createdAgo: 0, term: 7, recent: true, note: "Monthly ration" },
     ],
@@ -95,6 +97,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 2100, createdAgo: 50, term: 10, paidAfterDue: -2 },
       { rupees: 900, createdAgo: 35, term: 10, paidAfterDue: 3 },
       { rupees: 450, createdAgo: 20, term: 10, paidAfterDue: -1 },
+      { rupees: 1885, createdAgo: 12, term: 10, paidAfterDue: -1, recent: true, note: "Office pantry" },
       { rupees: 1830, createdAgo: 6, term: 10, recent: true, parts: [{ rupees: 520, ago: 0 }], note: "Rice and oil" },
     ],
   },
@@ -114,7 +117,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 990, createdAgo: 50, term: 7, paidAfterDue: 3 },
       { rupees: 430, createdAgo: 40, term: 7, paidAfterDue: 0 },
       { rupees: 1250, createdAgo: 30, term: 7, paidAfterDue: 6 },
-      { rupees: 1400, createdAgo: 22, term: 7, parts: [{ rupees: 300, ago: 10 }, { rupees: 760, ago: 0 }] },
+      { rupees: 1400, createdAgo: 22, term: 7, parts: [{ rupees: 300, ago: 10 }, { rupees: 760, ago: 0, thisMonth: true }] },
       { rupees: 750, createdAgo: 12, term: 7 },
       { rupees: 1035, createdAgo: 3, term: 7, recent: true },
     ],
@@ -140,7 +143,7 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
       { rupees: 1300, createdAgo: 45, term: 7, paidAfterDue: 0 },
       { rupees: 1400, createdAgo: 32, term: 7, parts: [{ rupees: 600, ago: 28 }, { rupees: 800, ago: 25 }] },
       { rupees: 560, createdAgo: 24, term: 7, paidAfterDue: -2 },
-      { rupees: 1750, createdAgo: 19, term: 7, parts: [{ rupees: 750, ago: 0 }], note: "Wedding supplies" },
+      { rupees: 1750, createdAgo: 12, term: 7, parts: [{ rupees: 750, ago: 0, thisMonth: true }], note: "Wedding supplies" },
       { rupees: 2140, createdAgo: 4, term: 10, recent: true, note: "Shop supplies" },
     ],
   },
@@ -149,13 +152,14 @@ const DEMO_CUSTOMERS: CustomerSpec[] = [
 /** Builds the seed for a given IST date. Deterministic: same date, same seed. */
 export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
   const daysIntoMonth = Number(today.slice(8, 10)) - 1; // 0 on the 1st
-  const cap = (ago: number, recent?: boolean) => (recent ? Math.min(ago, daysIntoMonth) : ago);
+  // Recent: capped at the 1st. Older history: shifted to before the 1st, so it never counts as this month
+  const place = (ago: number, recent?: boolean) => (recent ? Math.min(ago, daysIntoMonth) : ago + daysIntoMonth);
   let sourceIndex = 0;
   const nextSource = () => SOURCES[sourceIndex++ % SOURCES.length];
 
   return {
     customers: DEMO_CUSTOMERS.map((spec) => {
-      const firstEntryAgo = Math.max(...spec.entries.map((e) => e.createdAgo));
+      const firstEntryAgo = Math.max(...spec.entries.map((e) => place(e.createdAgo, e.recent)));
       const entries: SeedEntry[] = [];
       const payments: SeedPayment[] = [];
       const usesFamilyVpa = spec.name === "Arjun Mehta" || spec.name === "Lakshmi Iyer";
@@ -164,8 +168,8 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
       spec.entries.forEach((entry, index) => {
         const e = {
           ...entry,
-          createdAgo: cap(entry.createdAgo, entry.recent),
-          parts: entry.parts?.map((p) => ({ ...p, ago: cap(p.ago, entry.recent) })),
+          createdAgo: place(entry.createdAgo, entry.recent),
+          parts: entry.parts?.map((p) => ({ ...p, ago: place(p.ago, entry.recent || p.thisMonth) })),
         };
         const created = addDays(today, -e.createdAgo);
         const due = addDays(created, e.term);
@@ -178,7 +182,8 @@ export function buildDemoSeed(today: IsoDate = todayIST()): Seed {
 
         const parts =
           e.parts ??
-          (e.paidAfterDue === undefined ? [] : [{ rupees: e.rupees, ago: e.createdAgo - e.term - e.paidAfterDue }]);
+          // Early in the month a recent entry's planned payment day can still be ahead: it was paid today
+          (e.paidAfterDue === undefined ? [] : [{ rupees: e.rupees, ago: Math.max(0, e.createdAgo - e.term - e.paidAfterDue) }]);
         for (const part of parts) {
           const source = nextSource();
           const vpa = source === "cash" ? undefined : usesFamilyVpa && onlinePayments++ === 0 ? SHARED_FAMILY_VPA : spec.vpa;
